@@ -1,0 +1,12 @@
+﻿Der Buildvorgang wurde am 03.09.2015 16:06:59 gestartet.
+     1>Projekt "C:\Users\Max\GitHub\SmokeSimulation\Projects\Getting Started with OpenCL\Getting Started with OpenCL\Getting Started with OpenCL.vcxproj" auf Knoten "2", Build Ziel(e).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\CL.exe /c /I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.0\include" /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc110.pdb" /Gd /TP /analyze- /errorReport:prompt main.cpp
+         main.cpp
+     1>c:\users\max\github\smokesimulation\projects\getting started with opencl\getting started with opencl\main.cpp(28): error C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 11.0\vc\include\stdio.h(218): Siehe Deklaration von 'fopen'
+     1>Die Erstellung des Projekts "C:\Users\Max\GitHub\SmokeSimulation\Projects\Getting Started with OpenCL\Getting Started with OpenCL\Getting Started with OpenCL.vcxproj" ist abgeschlossen, Build Ziel(e) -- FEHLER.
+
+Fehler beim Buildvorgang.
+
+Verstrichene Zeit 00:00:00.13
