@@ -34,5 +34,5 @@ target_link_libraries(
     ${GLFW3_LIBRARIES}
     ${GLEW_LIBRARIES}
     ${OpenGL3_LIBRARIES}
-    ${OpenCL_LIBRARIES}
+    ${OPENCL_LIBRARIES}
 )

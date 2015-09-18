@@ -6,6 +6,8 @@ list(GET p2list 1 ProjectId)
 string(REPLACE " " "_" ProjectId ${ProjectId})
 project(${ProjectId})
 
+get_filename_component(ProjectId "${CMAKE_SOURCE_DIR}" NAME)
+
 include(${CMAKE_MODULE_PATH}/macros.cmake)
 
 set(CMAKE_CONFIGURATION_TYPES Debug;Release)
