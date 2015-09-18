@@ -1,6 +1,6 @@
 # ignoring build-directories
 /dependencies
-/Projects
+/projects
 /build*
 
 
