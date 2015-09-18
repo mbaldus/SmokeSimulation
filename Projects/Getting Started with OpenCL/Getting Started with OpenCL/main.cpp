@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
  
@@ -12,7 +13,7 @@
 int main(void) {
     // Create the two input vectors
     int i;
-    const int LIST_SIZE = 1024;
+    const int LIST_SIZE = 512;
     int *A = (int*)malloc(sizeof(int)*LIST_SIZE);
     int *B = (int*)malloc(sizeof(int)*LIST_SIZE);
     for(i = 0; i < LIST_SIZE; i++) {
@@ -25,7 +26,7 @@ int main(void) {
     char *source_str;
     size_t source_size;
  
-    fp = fopen("vector_add_kernel.cl", "r");
+    fp = fopen("hello.cl", "r");
     if (!fp) {
         fprintf(stderr, "Failed to load kernel.\n");
         exit(1);
