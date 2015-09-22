@@ -20,13 +20,14 @@ include_directories(
 
 file(GLOB_RECURSE SOURCES *.cpp)
 file(GLOB_RECURSE HEADER *.h)
+file(GLOB_RECURSE KERNELS *.cl)
 
 add_definitions(-DSHADERS_PATH="${SHADERS_PATH}")
 add_definitions(-DRESOURCES_PATH="${RESOURCES_PATH}")
 add_definitions(-DGLFW_INCLUDE_GLCOREARB)
 add_definitions(-DGLEW_STATIC)
 
-add_executable(${ProjectId} ${SOURCES} ${HEADER})
+add_executable(${ProjectId} ${SOURCES} ${HEADER} ${KERNELS})
 
 target_link_libraries(
     ${ProjectId}
