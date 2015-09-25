@@ -3,7 +3,7 @@ std::string kernel_source = STRINGIFY(
 
 float function_example(float a, float b)
 {
-    return (float)((a * a) + (b * b)) / 1000;
+    return a + b;
 }
 
 __kernel void part1(__global float* a, __global float* b, __global float* c)
