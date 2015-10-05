@@ -5,7 +5,7 @@
 #include <string.h>
 
 
-#include "cll.h"
+#include <CL/cl.hpp>
 #include "util.h"
 
 /*

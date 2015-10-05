@@ -4,9 +4,7 @@
 #include <string>
 #include <string.h>
 
-
-//#include "cll2.h"
-#include <Part2/util.h>
+#include <GL/buffer.h>
 
 GLuint createVBO(const void* data, int dataSize,GLenum target, GLenum usage)
 {

@@ -23,6 +23,21 @@ GLFWwindow* GLTools::generateWindow(int width, int height, int posX, int posY, s
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_DEPTH_TEST);
 
+	
+ //   // projection
+	//glm::mat4 projection = glm::perspective(90.0f, (GLfloat)width / (GLfloat)height, 0.01f, 1000.0f);
+
+	//// If you're using the now deprecated matrix stacks
+	//glMatrixMode(GL_PROJECTION);
+	//glLoadMatrixf(glm::value_ptr(projection));
+
+
+ //   // set view matrix
+ //   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+ //   glMatrixMode(GL_MODELVIEW);
+ //   glLoadIdentity();
+ //   glTranslatef(0.0, 0.0, -1.0f);
+
 	registerDefaultGLFWCallbacks(window);
 
 	return window;

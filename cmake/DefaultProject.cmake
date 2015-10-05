@@ -4,9 +4,11 @@ list(REVERSE p2list)
 list(GET p2list 0 first)
 list(GET p2list 1 ProjectId)
 string(REPLACE " " "_" ProjectId ${ProjectId})
-project(${ProjectId})
-
+if(WIN32)
 get_filename_component(ProjectId "${CMAKE_SOURCE_DIR}" NAME)
+endif(WIN32)
+
+project(${ProjectId})
 
 include(${CMAKE_MODULE_PATH}/macros.cmake)
 
