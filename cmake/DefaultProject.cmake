@@ -30,3 +30,7 @@ GENERATE_SUBDIRS(ALL_EXECUTABLES ${EXECUTABLES_PATH} ${PROJECT_BINARY_DIR}/execu
 if(EXISTS ${SHADERS_PATH})
 	add_subdirectory(${SHADERS_PATH})
 endif()
+
+if(EXISTS ${KERNELS_PATH})
+	add_subdirectory(${KERNELS_PATH})
+endif()

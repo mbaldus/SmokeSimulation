@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <iostream>
 
 #define NUM_PARTICLES 1000000
 
@@ -25,10 +26,10 @@ int main(void) {
 	CL2* example = new CL2();
 
 	double xpos,ypos;
-    
-	//load and build our CL program from the file
-    #include "part2.cl" //std::string kernel_source is defined in this file
-    example->loadProgram(kernel_source);
+
+	//load kernel.cl file 
+	std::string kernel = loadfromfile(KERNELS_PATH "/kernel.cl");
+    example->loadProgram(kernel);
 	
 	//initialize our particle system with positions, velocities and color
 	int num = NUM_PARTICLES;

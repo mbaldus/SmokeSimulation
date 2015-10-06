@@ -3,7 +3,8 @@
 #include <time.h>
 #include <iostream>
 
-#include <Part1\cll.h>
+#include <Part1/cll.h>
+#include <Util/util.h>
  
 int main(void) {
 	printf("Main: Hello OpenCL\n");
@@ -14,10 +15,9 @@ int main(void) {
 	std::cout << "start..." << std::endl;
 
 	CL example;
-
+	std::string kernel_source = loadfromfile(KERNELS_PATH "/part1.cl");
     //load and build our CL program from the file
-    #include "part1.cl" //const char* kernel_source is defined in here
-    example.loadProgram(kernel_source);
+	example.loadProgram(kernel_source);
 	example.popCorn();
 	example.runKernel();
 	

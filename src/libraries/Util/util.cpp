@@ -1,37 +1,21 @@
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string>
-#include <string.h>
-
-
-#include <CL/cl.hpp>
 #include "util.h"
 
-/*
-* this libary is deliverd by the NVIDIA SDK for easy debugging
-*/
-char *file_contents(const char *filename, int *length)
+std::string loadfromfile(std::string filename)
 {
-    FILE *f = fopen(filename, "r");
-    void *buffer;
+	std::ifstream file;
+	file.open(filename.c_str());
+	if(!file.good())
+	{
+		std::cout << " Failed to open file: " << filename << std::endl;
+		exit(-1);
+	}
+	std::stringstream stream;
+	stream << file.rdbuf();
 
-    if (!f) {
-        fprintf(stderr, "Unable to open %s for reading\n", filename);
-        return NULL;
-    }
-
-    fseek(f, 0, SEEK_END);
-    *length = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    buffer = malloc(*length+1);
-    *length = fread(buffer, 1, *length, f);
-    fclose(f);
-    ((char*)buffer)[*length] = '\0';
-
-    return (char*)buffer;
+	file.close();
+	return stream.str();
 }
+
 
 
 
