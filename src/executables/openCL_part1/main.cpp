@@ -3,7 +3,7 @@
 #include <time.h>
 #include <iostream>
 
-#include <Part1/cll.h>
+#include "cll.h"
 #include <Util/util.h>
  
 int main(void) {
