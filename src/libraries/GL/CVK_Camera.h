@@ -14,7 +14,7 @@ class Camera
 		Camera();
 		~Camera();
 
-		virtual void update( GLFWwindow* window) = 0;
+		void update( GLFWwindow* window);
 
 		glm::mat4 *getView();
 		void getView( glm::vec3 *x, glm::vec3 *y, glm::vec3 *z, glm::vec3 *pos);

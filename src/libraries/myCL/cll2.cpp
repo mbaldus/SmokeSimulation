@@ -113,8 +113,8 @@ void CL2::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::
 	m_num = pos.size();
 	array_size = m_num * sizeof(glm::vec4);
 	//create VBO's (util.cpp)
-	p_vbo = createVBO(&pos[0], array_size, GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW); //id 1
-	c_vbo = createVBO(&col[0], array_size, GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW); //id 2
+	p_vbo = createVBO(&pos[0], array_size, GL_ARRAY_BUFFER); //id 1
+	c_vbo = createVBO(&col[0], array_size, GL_ARRAY_BUFFER); //id 2
 
 	//make sure OpenGL is finishedn before proceeding
 	glFinish();
@@ -209,11 +209,11 @@ void CL2::render()
 	glEnable(GL_POINT_SMOOTH);
 	glPointSize(1.0);
 
-	glBindBuffer(GL_ARRAY_BUFFER, c_vbo);
-	glColorPointer(4, GL_FLOAT, 0,0);
-
 	glBindBuffer(GL_ARRAY_BUFFER, p_vbo);
 	glVertexPointer(4, GL_FLOAT, 0, 0);
+	
+	glBindBuffer(GL_ARRAY_BUFFER, c_vbo);
+	glColorPointer(4, GL_FLOAT, 0,0);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);

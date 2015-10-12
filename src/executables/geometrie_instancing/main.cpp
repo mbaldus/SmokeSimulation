@@ -4,10 +4,11 @@
 
 #define NUM_PARTICLES 1000000
 
-#include <Part2/cll2.h>
-#include <Part1/util.h>
+#include <myCL/cll2.h>
+#include <Util/util.h>
 #include <GL/GLTools.h>
 #include <GL/CVK_Trackball.h>
+#include <GL/ShaderProgram.h>
  
 float rand_float(float mn, float mx)
 {
@@ -26,8 +27,7 @@ int main(void) {
 
 	double xpos,ypos;
     
-	//load and build our CL program from the file
-    #include "part2.cl" //std::string kernel_source is defined in this file
+	std::string kernel_source = loadfromfile(KERNELS_PATH "/kernel.cl");
     example->loadProgram(kernel_source);
 	
 	//initialize our particle system with positions, velocities and color
@@ -40,12 +40,11 @@ int main(void) {
 	for (int i = 0; i <num; i++)
 	{
 		//distribute the particles in a random circle around z axis
-		float rad = rand_float(0.1,0.5);
+		float rad = rand_float(0.5,1);
 		float x = rad*sin(2*3.14*i/num);
-		float z = 0;
-		//float z = rad;
-	//	float y = -1;
-		float y = rad*cos(2*3.14*i/num);
+		float z = rad*cos(2*3.14*i/num);
+		float y = 0;
+	//	float y = rad*cos(2*3.14*i/num);
 		pos[i] = glm::vec4(x,y,z,1.0f);
 		//printf("pos: %f,%f,%f\n", pos[i].x, pos[i].y, pos[i].z);
 		
@@ -55,19 +54,37 @@ int main(void) {
 		//printf("vel: %f,%f,%f\n", vel[i].x, vel[i].y, vel[i].z);
 
 		//just make them red and full alpha
-        color[i] = glm::vec4(1, 1, 1, 1.0f);
+        color[i] = glm::vec4(1, 0, 1, 1.0f);
 	}
 	example->loadData(pos,vel,color);
 	example->genKernel();
 
+	//###################################################################
+	//						GL ShaderProgram
+
+	ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/simpleFS.frag");
+	//###################################################################
+
+	glm::mat4 model = glm::mat4(1.0f);
+	glm::mat4 view = glm::lookAt(glm::vec3(0.0f,-0.1f,1.0f),glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,1.0f,0.0f));
+	glm::mat4 projection = glm::perspective(45.f, GLTools::getRatio(window), 0.1f, 100.f);
+	shaderprogram->update("model",model);
+	shaderprogram->update("view",view);
+	shaderprogram->update("projection",projection);
+
 	std::function<void(double)> loop = 
 		[&example,
+		&shaderprogram,
 		&trackball,
+		&view,
 		&xpos, &ypos,
 		&window](double deltatime)
 	{
+		shaderprogram->use();
+		trackball.update(window,view);
+		shaderprogram->update("view", view);
+
 		example->render();
-	//	trackball.update(window);
 		/*glfwGetCursorPos(window,&xpos,&ypos);
 		std::cout << xpos << std::endl;*/
 	};

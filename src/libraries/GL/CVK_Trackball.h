@@ -8,11 +8,11 @@
 class Trackball : public Camera
 {
 public:
-	Trackball( int width, int height, Projection *projection);
 	Trackball( int width, int height);
 	~Trackball();
 
-	void update( GLFWwindow* window);
+	//void update( GLFWwindow* window);
+	void update( GLFWwindow* window, glm::mat4 &viewmatrix);
 	void setCenter( glm::vec3 *center);
 	void setRadius( float radius);
 	void setUpvector( glm::vec3 *up);

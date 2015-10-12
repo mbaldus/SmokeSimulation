@@ -6,13 +6,13 @@
 
 #include <GL/buffer.h>
 
-GLuint createVBO(const void* data, int dataSize,GLenum target, GLenum usage)
+GLuint createVBO(const void* data, int dataSize,GLenum target)
 {
 	GLuint id = 0; //0 is reserved
 
 	glGenBuffers(1, &id);	//create VBO
 	glBindBuffer(target,id); //activate vbo id to use
-	glBufferData(target, dataSize, data, usage); //upload data to video card
+	glBufferData(target, dataSize, data, GL_STATIC_DRAW); //upload data to video card
 
 	//check data size in VBO is same as input array, if not return 0 and delete VBO
 	int buffersize = 0;
