@@ -44,13 +44,3 @@ void Camera::lookAt( glm::vec3 position, glm::vec3 center, glm::vec3 up)
 {
 	m_viewmatrix = glm::lookAt( position, center, up);  
 }
-
-void Camera::setProjection( Projection *projection)
-{
-	m_projection =  projection;
-}
-
-Projection *Camera::getProjection()
-{
-	return m_projection;
-}

@@ -6,7 +6,6 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/ext.hpp>
 #include <GLFW\glfw3.h>
-#include "CVK_Projection.h"
 
 class Camera
 	{
@@ -23,13 +22,10 @@ class Camera
 		void getWidthHeight( int *width, int *height);
 
 		void lookAt( glm::vec3 position, glm::vec3 center, glm::vec3 up);
-		void setProjection( Projection *projection);
-		Projection *getProjection();
 
 	protected:
 		int m_width, m_height;
 		glm::mat4 m_viewmatrix;
-		Projection *m_projection;
 };
 
 #endif /* __CVK_CAMERA_H */
