@@ -6,27 +6,20 @@
 
 #include <GL/buffer.h>
 
-GLuint createVBO(const void* data, int dataSize,GLenum target)
+GLuint createVBO(const void* data, int dataSize, GLuint dimensions, GLuint vertexAttributePointer)
 {
-	GLuint id = 0; //0 is reserved
+	GLuint vbo = 0; //0 is reserved
 
-	glGenBuffers(1, &id);	//create VBO
-	glBindBuffer(target,id); //activate vbo id to use
-	glBufferData(target, dataSize, data, GL_STATIC_DRAW); //upload data to video card
-
-	//check data size in VBO is same as input array, if not return 0 and delete VBO
-	int buffersize = 0;
-	glGetBufferParameteriv(target, GL_BUFFER_SIZE, &buffersize);
-	if(dataSize != buffersize)
-	{
-		glDeleteBuffers(1, &id);
-		id = 0;
-		printf("[createVBO()] Data size is mismatch with input array\n");
-	}
-	glBindBuffer(target,0);
-	return id; //return VBO id
+	glGenBuffers(1, &vbo);	//create VBO
+	glBindBuffer(GL_ARRAY_BUFFER,vbo); //activate vbo id to use
+	glBufferData(GL_ARRAY_BUFFER, dataSize, data, GL_STATIC_DRAW); //upload data to video card
+	
+	glVertexAttribPointer(vertexAttributePointer, dimensions, GL_FLOAT, 0, 0, 0);
+	glEnableVertexAttribArray(vertexAttributePointer);
+	
+	glBindBuffer(GL_ARRAY_BUFFER,0);
+	return vbo; //return VBO id
 }
-
 
 
 
