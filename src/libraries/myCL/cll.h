@@ -18,7 +18,7 @@
 
 #include <glm/glm.hpp>
 
-class CL2
+class CLparticles
 {
 	public:
 
@@ -33,9 +33,9 @@ class CL2
 		size_t array_size; //the size of our arrays num * sizeof(Vec4)
 
 		//default constructor initializes OpenCL Context and chooses platform and device
-		CL2();
+		CLparticles();
 		//default deconstructor releases OpenCL objects and frees device memory
-		~CL2();
+		~CLparticles();
 
 		//load OpenCL program from a file
 		//pass in the kernel source code as a string. 

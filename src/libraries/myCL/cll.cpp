@@ -1,6 +1,6 @@
-#include "cll2.h"
+#include "cll.h"
 
-CL2::CL2()
+CLparticles::CLparticles()
 {
 	printf("cll.cpp: in: Constructor\n");
 	printf("cll.cpp: Initialize OpenCL Object and context \n");
@@ -56,11 +56,11 @@ CL2::CL2()
 	printf("cll.cpp: out: Constructor: OpenCL has been initialized \n###################################################### \n");
 }
 
-CL2::~CL2()
+CLparticles::~CLparticles()
 {
 }
 
-void CL2::loadProgram(std::string kernel_source)
+void CLparticles::loadProgram(std::string kernel_source)
 {
 	printf("cll.cpp: in: loadProgram()\n");
 	//Program Setup
@@ -100,7 +100,7 @@ void CL2::loadProgram(std::string kernel_source)
 
 }
 
-void CL2::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<glm::vec4> col)
+void CLparticles::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<glm::vec4> col)
 {
 	//store number of particles and the size of bytes of our arrays
 	m_num = pos.size();
@@ -130,9 +130,9 @@ void CL2::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::
 	m_queue.finish();
 }
 
-void CL2::genKernel()
+void CLparticles::genKernel()
 {
-	printf("part2: in genKernel\n");
+	printf("cll: in genKernel\n");
 
 	//initialize our kernel from the program
 	try
@@ -141,9 +141,9 @@ void CL2::genKernel()
 		m_kernel = cl::Kernel(m_program, "part2", &m_err);
 	}catch(cl::Error er)
 	{
-		printf("part2: Error: %s(%d)\n", er.what(), er.err()); 
+		printf("cll.cpp: Error: %s(%d)\n", er.what(), er.err()); 
 	}
-	printf("part2: generated Kernel\n");
+	printf("cll.cpp: generated Kernel\n");
 	//set the arguments of the kernel
 	try
 	{
@@ -156,14 +156,14 @@ void CL2::genKernel()
 	{
 		printf("ERROR: %s\n", er.what(), oclErrorString(er.err()));
 	}
-	printf("part2: set Kernelarguments\n");
+	printf("cll.cpp: set Kernelarguments\n");
 	
 	//Wait for the command queue to finish these commands before proceeding
     m_queue.finish();
-	printf("part2: out: genKernel()\n######################################################\n");
+	printf("cll.cpp: out: genKernel()\n######################################################\n");
 }
 
-void CL2::runKernel()
+void CLparticles::runKernel()
 {
 
 	//update the system by calculating new velocities and updating positions of particles
@@ -187,7 +187,7 @@ void CL2::runKernel()
 
 }
 
-void CL2::render()
+void CLparticles::render()
 {
 	glDisable(GL_DEPTH_TEST);
 
