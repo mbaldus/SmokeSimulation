@@ -3,7 +3,7 @@
 #include <time.h>
 #include <iostream>
 
-#include "cll.h"
+#include "cllstart.h"
 #include <Util/util.h>
  
 int main(void) {
@@ -14,7 +14,7 @@ int main(void) {
 
 	std::cout << "start..." << std::endl;
 
-	CL example;
+	CLstart example;
 	std::string kernel_source = loadfromfile(KERNELS_PATH "/part1.cl");
     //load and build our CL program from the file
 	example.loadProgram(kernel_source);

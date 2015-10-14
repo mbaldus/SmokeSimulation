@@ -2,10 +2,10 @@
 #include <iostream>
 #include <string>
 
-#include "cll.h"
+#include "cllstart.h"
 #include <Util/util.h>
 
-CL::CL()
+CLstart::CLstart()
 {
 	printf("cll.cpp: in: Constructor\n");
 	m_num = 10000000;
@@ -62,7 +62,7 @@ CL::~CL()
 {
 }
 
-void CL::loadProgram(std::string kernel_source)
+void CLstart::loadProgram(std::string kernel_source)
 {
 	printf("cll.cpp: in: loadProgram()\n");
 	//Program Setup
@@ -100,7 +100,7 @@ void CL::loadProgram(std::string kernel_source)
 
 }
 
-void CL::popCorn()
+void CLstart::popCorn()
 {
 	printf("part1: in popCorn\n");
 
@@ -155,7 +155,7 @@ void CL::popCorn()
 	printf("part1: out: popCorn()\n######################################################\n");
 }
 
-void CL::runKernel()
+void CLstart::runKernel()
 {
 	printf("part1: in: runKernel()\n");
 

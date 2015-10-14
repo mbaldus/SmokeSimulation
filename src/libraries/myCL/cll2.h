@@ -1,7 +1,21 @@
+#ifndef CL2_H
+#define CL2_H
+
 #define __CL_ENABLE_EXCEPTIONS
 
+
+
 #include <vector>
+#include <stdio.h>
+#include <iostream>
+#include <string>
+
 #include <CL/cl.hpp>
+
+#include <GL/buffer.h>
+#include <GL/glcorearb.h>
+#include <Util/util.h>
+
 #include <glm/glm.hpp>
 
 class CL2
@@ -55,3 +69,5 @@ class CL2
 		cl_int m_err;
 		cl::Event m_event;
 };
+
+#endif //CL2_H

@@ -3,7 +3,7 @@
 #include <vector>
 #include <CL/cl.hpp>
 
-class CL
+class CLstart
 {
 	public:
 
@@ -13,9 +13,9 @@ class CL
 		int m_num; //<! size of the array
 
 		//default constructor initializes OpenCL Context and chooses platform and device
-		CL();
+		CLstart();
 		//default deconstructor releases OpenCL objects and frees device memory
-		~CL();
+		~CLstart();
 
 		//load OpenCL program from a file
 		//pass in the kernel source code as a string. 

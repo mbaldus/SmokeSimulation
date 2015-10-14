@@ -1,3 +1,6 @@
+#ifndef UTIL_H
+#define UTIL_H
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,3 +16,4 @@ std::string loadfromfile(std::string filename);
 
 const char* oclErrorString(cl_int error);
 
+#endif //UTIL_H

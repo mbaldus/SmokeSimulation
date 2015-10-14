@@ -1,11 +1,4 @@
-#include <stdio.h>
-#include <iostream>
-#include <string>
-
 #include "cll2.h"
-#include <GL/buffer.h>
-#include <GL/glcorearb.h>
-#include <Util/util.h>
 
 CL2::CL2()
 {

@@ -1,10 +1,4 @@
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string>
-#include <string.h>
-
-#include <GL/buffer.h>
+#include "buffer.h"
 
 GLuint createVBO(const void* data, int dataSize, GLuint dimensions, GLuint vertexAttributePointer)
 {
