@@ -100,21 +100,22 @@ void CLparticles::loadProgram(std::string kernel_source)
 
 }
 
-void CLparticles::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<glm::vec4> col)
+void CLparticles::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel) //, std::vector<glm::vec4> col)
 {
 	//store number of particles and the size of bytes of our arrays
 	m_num = pos.size();
 	array_size = m_num * sizeof(glm::vec4);
+	
 	//create VBO's (util.cpp)
 	p_vbo = createVBO(&pos[0], array_size, 4, 0); //id 1
-	c_vbo = createVBO(&col[0], array_size, 4, 2); //id 2
+	//c_vbo = createVBO(&col[0], array_size, 4, 2); //id 2
 
 	//make sure OpenGL is finishedn before proceeding
 	glFinish();
 
 	//create OpenCL buffer from GL VBO
 	cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, p_vbo, &m_err));
-	cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, c_vbo, &m_err));
+	//cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, c_vbo, &m_err));
 
 	//create OpenCL only arrays
 	cl_velocities = cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
@@ -148,10 +149,10 @@ void CLparticles::genKernel()
 	try
 	{
 		m_err = m_kernel.setArg(0,cl_vbos[0]);
-		m_err = m_kernel.setArg(1,cl_vbos[1]);
-		m_err = m_kernel.setArg(2,cl_velocities);
-		m_err = m_kernel.setArg(3,cl_pos_gen);
-		m_err = m_kernel.setArg(4,cl_vel_gen);
+	//	m_err = m_kernel.setArg(1,cl_vbos[1]); //leave out color for the first, this is done by the shaders
+		m_err = m_kernel.setArg(1,cl_velocities);
+		m_err = m_kernel.setArg(2,cl_pos_gen);
+		m_err = m_kernel.setArg(3,cl_vel_gen);
 	}catch(cl::Error er)
 	{
 		printf("ERROR: %s\n", er.what(), oclErrorString(er.err()));
@@ -163,7 +164,7 @@ void CLparticles::genKernel()
 	printf("cll.cpp: out: genKernel()\n######################################################\n");
 }
 
-void CLparticles::runKernel()
+void CLparticles::runKernel(int reverse)
 {
 
 	//update the system by calculating new velocities and updating positions of particles
@@ -176,7 +177,8 @@ void CLparticles::runKernel()
 	m_queue.finish();
 
 	float dt = 0.003f;
-	m_kernel.setArg(5, dt); //pass the timestamp
+	m_kernel.setArg(4, dt); //pass the timestamp
+	m_kernel.setArg(5, reverse);
 	//execute the kernel
 	m_err = m_queue.enqueueNDRangeKernel(m_kernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
 	m_queue.finish();
@@ -193,20 +195,17 @@ void CLparticles::render()
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	runKernel();
+	
 
 	//render Particles from VBOS
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_POINT_SMOOTH);
-	glPointSize(1.0);
+	glPointSize(2.0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, p_vbo); //p_vbo is 0
 	glEnableVertexAttribArray(0);
 	
-	//glBindBuffer(GL_ARRAY_BUFFER, c_vbo);
-	//glColorPointer(4, GL_FLOAT, 0,0);
-
 	glDrawArrays(GL_POINTS, 0, m_num);
 
 }

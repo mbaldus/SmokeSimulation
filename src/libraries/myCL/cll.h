@@ -42,13 +42,13 @@ class CLparticles
 		void loadProgram(std::string kernel_source);
 
 		//setup the data for the kernel
-		void loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<glm::vec4> color);
+		void loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel);//, std::vector<glm::vec4> color);
 		
 		//setup data for the kernel
 		void genKernel();
 		
 		//execute the kernel
-		void runKernel();
+		void runKernel(int reverse);
 
 		void render();
 

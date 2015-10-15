@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 1000000
+#define NUM_PARTICLES 100000
 
 #include <myCL/cll.h>
 #include <Util/util.h>
@@ -34,37 +34,36 @@ int main(void) {
 	int num = NUM_PARTICLES;
 	std::vector<glm::vec4> pos(num);
 	std::vector<glm::vec4> vel(num);
-	std::vector<glm::vec4> color(num);
 
 	//fill vectors with initial data
 	for (int i = 0; i <num; i++)
 	{
 		//distribute the particles in a random circle around z axis
-		float rad = rand_float(0.5,1);
+		float rad = rand_float(0.3,1);
 		float x = rad*sin(2*3.14*i/num);
 		float z = rad*cos(2*3.14*i/num);
 		float y = 0;
-	//	float y = rad*cos(2*3.14*i/num);
+		//float y = rad*cos(2*3.14*i/num);
 		pos[i] = glm::vec4(x,y,z,1.0f);
 		//printf("pos: %f,%f,%f\n", pos[i].x, pos[i].y, pos[i].z);
 		
 		float life_r =rand_float(0.0f,1.0f);
+		float rand_y = rand_float(-1.0,3);
+		glm::vec3 initial_vel =  glm::vec3(x,rand_y,z);
+		
 		//printf("life: %f\n", life_r);
-		vel[i] = glm::vec4(0.0,0.0f,3.0f, life_r);
+		vel[i] = glm::vec4(initial_vel, life_r);
+		
 		//printf("vel: %f,%f,%f\n", vel[i].x, vel[i].y, vel[i].z);
-
-		//just make them red and full alpha
-        color[i] = glm::vec4(1, 0, 1, 1.0f);
 	}
-	example->loadData(pos,vel,color);
+	example->loadData(pos,vel); 
 	example->genKernel();
 
 	//###################################################################
-	//						GL ShaderProgram
+	//				GL ShaderProgram and Camera Settings
 
 	ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/simpleFS.frag");
-	//###################################################################
-
+	
 	glm::mat4 model = glm::mat4(1.0f);
 	glm::mat4 view = glm::lookAt(glm::vec3(0.0f,-0.1f,1.0f),glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,1.0f,0.0f));
 	glm::mat4 projection = glm::perspective(45.f, GLTools::getRatio(window), 0.1f, 100.f);
@@ -72,18 +71,32 @@ int main(void) {
 	shaderprogram->update("view",view);
 	shaderprogram->update("projection",projection);
 
+	//###################################################################
+
+	//reverse gravity
+	int reverse = 0;
+
 	std::function<void(double)> loop = 
 		[&example,
 		&shaderprogram,
 		&trackball,
 		&view,
-		&xpos, &ypos,
+		&xpos, &ypos, &reverse,
 		&window](double deltatime)
 	{
 		shaderprogram->use();
 		trackball.update(window,view);
 		shaderprogram->update("view", view);
 
+		//some mousebuttonfun that reverses the gravity
+		if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) == GLFW_PRESS)
+		{
+			reverse = 1;
+		}else {
+			reverse = 0;
+		}
+
+		example->runKernel(reverse);
 		example->render();
 		/*glfwGetCursorPos(window,&xpos,&ypos);
 		std::cout << xpos << std::endl;*/
@@ -93,6 +106,7 @@ int main(void) {
 
 	//cleanup
 	GLTools::destroyWindow(window);
+	delete shaderprogram;
 	delete example;
    return 0;
 }

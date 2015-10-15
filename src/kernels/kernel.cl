@@ -1,4 +1,4 @@
-__kernel void part2(__global float4* pos, __global float4* color, __global float4* vel, __global float4* pos_gen, __global float4* vel_gen, float dt)
+__kernel void part2(__global float4* pos,  __global float4* vel, __global float4* pos_gen, __global float4* vel_gen, float dt, int reverse)
 {
     //get our index in the array
     unsigned int i = get_global_id(0);
@@ -22,26 +22,26 @@ __kernel void part2(__global float4* pos, __global float4* color, __global float
 
     //we use a first order euler method to integrate the velocity and position (i'll expand on this in another tutorial)
     //update the velocity to be affected by "gravity" in the z direction
-	//if(p.y < 0)
-	//{
- //   v.y -= 9.8*dt;
- //   //update the position with the new velocity
- //   p.y += v.y*dt;
-	//}else
-	//{
+	if(reverse == 1)
+	{
+		v.y -= 9.8*dt;
+
+	p.x += v.x*dt;
+    p.y += v.y*dt;
+    p.z += v.z*dt;
+	}else if (reverse == 0)
+	{
 	v.y += 9.8*dt;
     //update the position with the new velocity
+	p.x += v.x*dt;
     p.y += v.y*dt;
-	//}
-    //store the updated life in the velocity array
+    p.z += v.z*dt;
+	}
+	//store the updated life in the velocity array
     v.w = life;
 
     //update the arrays with our newly computed values
     pos[i] = p;
     vel[i] = v;
-
-    //you can manipulate the color based on properties of the system
-    //here we adjust the alpha
-    color[i].w = 0.5*life;
 }
 
