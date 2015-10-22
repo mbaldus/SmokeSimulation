@@ -58,7 +58,7 @@ CLstart::CLstart()
 	printf("cll.cpp: out: Constructor: OpenCL has been initialized \n###################################################### \n");
 }
 
-CL::~CL()
+CLstart::~CLstart()
 {
 }
 

@@ -98,8 +98,6 @@ int main(void) {
 
 		example->runKernel(reverse);
 		example->render();
-		/*glfwGetCursorPos(window,&xpos,&ypos);
-		std::cout << xpos << std::endl;*/
 	};
 	
 	GLTools::render(window, loop);

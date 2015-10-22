@@ -12,8 +12,11 @@
 
 #include <CL/cl.hpp>
 
-#include <GL/buffer.h>
+#include <GL/glew.h>
 #include <GL/glcorearb.h>
+#include <GL/buffer.h>
+
+
 #include <Util/util.h>
 
 #include <glm/glm.hpp>
@@ -44,7 +47,7 @@ class CLparticles
 		//setup the data for the kernel
 		void loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel);//, std::vector<glm::vec4> color);
 		
-		//setup data for the kernel
+		//setup data for the kernela
 		void genKernel();
 		
 		//execute the kernel
