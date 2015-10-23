@@ -35,8 +35,8 @@ __kernel void part2(__global float4* pos,  __global float4* vel, __global float4
 	v.y += 9.8*dt;
 	if( ((-0.5 < p.x && p.x < 0.5) && (-0.5 < p.y && p.y < 0.5) && (-0.5 < p.z && p.z < 0.5)))
 	{
-		reflection = 2 * p.xyz * ((p.x * v.x) + (p.y * v.y) + (p.z * v.z)) - v.xyz;
-		v.xyz = reflection;	
+		reflection = 2 * p.xyz * ((p.x * v.x) + (p.y * v.y) + (p.z * v.z)) - v.xyz; 
+		v.xyz = -1 * reflection;	
 		p.xyz += v.xyz *dt * friction;
 	//v.xyz *= -1 * friction;
 	}else
