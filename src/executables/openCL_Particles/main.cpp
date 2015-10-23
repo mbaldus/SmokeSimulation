@@ -27,7 +27,7 @@ int main(void) {
 
 	double xpos,ypos;
     
-	std::string kernel_source = loadfromfile(KERNELS_PATH "/kernel.cl");
+	std::string kernel_source = loadfromfile(KERNELS_PATH "/part2.cl");
     example->loadProgram(kernel_source);
 	
 	//initialize our particle system with positions, velocities and color
@@ -35,27 +35,56 @@ int main(void) {
 	std::vector<glm::vec4> pos(num);
 	std::vector<glm::vec4> vel(num);
 
+	////fill vectors with initial data
+	//for (int i = 0; i <num; i++)
+	//{
+	//	//distribute the particles in a random circle around z axis
+	//	float rad = rand_float(0.3,1);
+	//	float x = rad*sin(2*3.14*i/num);
+	//	float z = rad*cos(2*3.14*i/num);
+	//	float y = 0;
+	//	//float y = rad*cos(2*3.14*i/num);
+	//	pos[i] = glm::vec4(x,y,z,1.0f);
+	//	//printf("pos: %f,%f,%f\n", pos[i].x, pos[i].y, pos[i].z);
+	//	
+	//	float life_r =rand_float(0.0f,1.0f);
+	//	float rand_y = rand_float(-1.0,3);
+	//	glm::vec3 initial_vel =  glm::vec3(x,rand_y,z);
+	//	
+	//	//printf("life: %f\n", life_r);
+	//	vel[i] = glm::vec4(initial_vel, life_r);
+	//	
+	//	//printf("vel: %f,%f,%f\n", vel[i].x, vel[i].y, vel[i].z);
+	//}
+
+	//spawn on sphere
 	//fill vectors with initial data
 	for (int i = 0; i <num; i++)
 	{
-		//distribute the particles in a random circle around z axis
-		float rad = rand_float(0.3,1);
-		float x = rad*sin(2*3.14*i/num);
-		float z = rad*cos(2*3.14*i/num);
-		float y = 0;
-		//float y = rad*cos(2*3.14*i/num);
+		float rand = rand_float(0.0f ,1.0f);
+		float thetha = rand_float(0,3.14f);
+		float phi = rand_float(0, 2*3.14f);
+		
+		float radius = 1.0f;
+		float x = radius * cos(phi)*sin(thetha);
+		float y = radius * cos(thetha);
+		float z = radius * sin(thetha)*sin(phi);
+
 		pos[i] = glm::vec4(x,y,z,1.0f);
-		//printf("pos: %f,%f,%f\n", pos[i].x, pos[i].y, pos[i].z);
+
+		printf("pos: %f,%f,%f\n", pos[i].x, pos[i].y, pos[i].z);
 		
 		float life_r =rand_float(0.0f,1.0f);
 		float rand_y = rand_float(-1.0,3);
-		glm::vec3 initial_vel =  glm::vec3(x,rand_y,z);
+		glm::vec3 initial_vel =  glm::vec3(x*5,y*5,z*5);
 		
 		//printf("life: %f\n", life_r);
 		vel[i] = glm::vec4(initial_vel, life_r);
-		
+		//vel[i] = glm::vec4(0,0,0, life_r);
 		//printf("vel: %f,%f,%f\n", vel[i].x, vel[i].y, vel[i].z);
 	}
+
+
 	example->loadData(pos,vel); 
 	example->genKernel();
 

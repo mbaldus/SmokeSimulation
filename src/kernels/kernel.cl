@@ -24,18 +24,13 @@ __kernel void part2(__global float4* pos,  __global float4* vel, __global float4
     //update the velocity to be affected by "gravity" in the z direction
 	if(reverse == 1)
 	{
-		v.y -= 9.8*dt;
-
-	p.x += v.x*dt;
-    p.y += v.y*dt;
-    p.z += v.z*dt;
-	}else if (reverse == 0)
+	v.y -= 9.8*dt;
+	p.xyz += v.xyz*dt;
+	}
+	else if (reverse == 0)
 	{
 	v.y += 9.8*dt;
-    //update the position with the new velocity
-	p.x += v.x*dt;
-    p.y += v.y*dt;
-    p.z += v.z*dt;
+	p.xyz += v.xyz*dt;
 	}
 	//store the updated life in the velocity array
     v.w = life;
