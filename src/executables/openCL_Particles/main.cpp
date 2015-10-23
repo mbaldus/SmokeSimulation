@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 100000
+#define NUM_PARTICLES 100
 
 #include <myCL/cll.h>
 #include <Util/util.h>
@@ -90,7 +90,7 @@ int main(void) {
 	for (int i = 0; i <num; i++)
 	{
 		float x = rand_float(-1.0,1.0);
-		float z = rand_float(-1.0,1.0);
+		float z = rand_float(0,0.5);
 		float y = -1;
 		pos[i] = glm::vec4(x,y,z,1.0f);
 		//printf("pos: %f,%f,%f\n", pos[i].x, pos[i].y, pos[i].z);

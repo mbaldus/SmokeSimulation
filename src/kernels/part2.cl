@@ -8,7 +8,7 @@ __kernel void part2(__global float4* pos,  __global float4* vel, __global float4
     float4 p = pos[i];
     float4 v = vel[i];
 
-	float friction = 0.85;
+	float friction = 0.5;
 	float normal = 1;
 
     //we've stored the life in the fourth component of our velocity array
@@ -36,12 +36,13 @@ __kernel void part2(__global float4* pos,  __global float4* vel, __global float4
 	if( ((-0.5 < p.x && p.x < 0.5) && (-0.5 < p.y && p.y < 0.5) && (-0.5 < p.z && p.z < 0.5)))
 	{
 		reflection = 2 * p.xyz * ((p.x * v.x) + (p.y * v.y) + (p.z * v.z)) - v.xyz; 
-		v.xyz = -1 * reflection;	
-		p.xyz += v.xyz *dt * friction;
+		float3 normalized_reflect = normalize(reflection);
+		v.xyz = -1 *  reflection;	
+		p.xyz += v.xyz * 0.1*dt ;
 	//v.xyz *= -1 * friction;
 	}else
 	{
-	p.xyz += v.xyz*dt;
+	p.xyz += v.xyz*0.1*dt;
 	}
 	//store the updated life in the velocity array
     v.w = life;
@@ -50,4 +51,7 @@ __kernel void part2(__global float4* pos,  __global float4* vel, __global float4
     pos[i] = p;
     vel[i] = v;
 }
+
+
+
 

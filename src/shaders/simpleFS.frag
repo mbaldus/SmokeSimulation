@@ -8,11 +8,13 @@ out vec4 fragcolor;
 
 void main()
 {
+	
+
 	if ((-0.5 < passPosition.x && passPosition.x < 0.5) && (-0.5 < passPosition.y && passPosition.y < 0.5) && (-0.5 < passPosition.z && passPosition.z < 0.5))
 	{
 		fragcolor = vec4(1,0,0,1);
 	}
-	else 
+	else
 	{
 	fragcolor = vec4(1,1,1,1);
 	}
