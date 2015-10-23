@@ -3,14 +3,20 @@
 //!< in-variables
 in vec4 passPosition;
 
+//!< uniforms
+
 //!< out-variables
 out vec4 fragcolor;
 
+
+bool radius_test(vec3 position, float radius)
+{
+return ((position.x*position.x) +(position.y*position.y)+(position.z*position.z)) <= radius;
+}
+
 void main()
 {
-	
-
-	if ((-0.5 < passPosition.x && passPosition.x < 0.5) && (-0.5 < passPosition.y && passPosition.y < 0.5) && (-0.5 < passPosition.z && passPosition.z < 0.5))
+	if (radius_test(passPosition.xyz, 0.3))
 	{
 		fragcolor = vec4(1,0,0,1);
 	}
