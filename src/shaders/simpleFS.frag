@@ -11,7 +11,7 @@ out vec4 fragcolor;
 
 bool radius_test(vec3 position, float radius)
 {
-return ((position.x*position.x) +(position.y*position.y)+(position.z*position.z)) <= radius;
+return (sqrt((position.x*position.x) +(position.y*position.y)+(position.z*position.z))) <= radius;
 }
 
 void main()

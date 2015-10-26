@@ -1,6 +1,6 @@
 bool radius_test(float3 position, float radius)
 {
-return ((position.x*position.x) +(position.y*position.y)+(position.z*position.z)) < radius;
+return (sqrt((position.x*position.x) +(position.y*position.y)+(position.z*position.z))) < radius;
 }
 
 __kernel void part2(__global float4* pos,  __global float4* vel, __global float4* pos_gen, __global float4* vel_gen, float dt, int reverse)
@@ -35,7 +35,8 @@ __kernel void part2(__global float4* pos,  __global float4* vel, __global float4
 		//collision with sphere
 		//compute new position according to the reflected velocity (by spherepoint's normal) 
 		float3 reflection = v.xyz - 2 * p.xyz * dot(p.xyz,v.xyz);
-		p.xyz += reflection * dt ;
+		v.xyz = reflection;
+		p.xyz += reflection *dt ;
 	}else
 	{
 	//compute new position with standart velocity
