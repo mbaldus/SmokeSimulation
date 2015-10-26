@@ -1,6 +1,6 @@
 bool radius_test(float3 position, float radius)
 {
-return (sqrt((position.x*position.x) +(position.y*position.y)+(position.z*position.z))) < radius;
+return (sqrt((position.x*position.x) +(position.y*position.y)+(position.z*position.z))) <= radius;
 }
 
 __kernel void part2(__global float4* pos,  __global float4* vel, __global float4* pos_gen, __global float4* vel_gen, float dt, int reverse)
