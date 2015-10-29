@@ -1,3 +1,8 @@
+bool radius_test(float3 position, float radius)
+{
+return (sqrt((position.x*position.x) +(position.y*position.y)+(position.z*position.z))) <= radius;
+}
+
 __kernel void part2(__global float4* pos,  __global float4* vel, __global float4* pos_gen, __global float4* vel_gen, float dt, int reverse)
 {
     //get our index in the array
@@ -8,7 +13,7 @@ __kernel void part2(__global float4* pos,  __global float4* vel, __global float4
     float4 p = pos[i];
     float4 v = vel[i];
 
-	float friction = 0.85;
+	float friction = 1;
 	float normal = 1;
 
     //we've stored the life in the fourth component of our velocity array
@@ -22,27 +27,22 @@ __kernel void part2(__global float4* pos,  __global float4* vel, __global float4
         v = vel_gen[i];
         life = 1.0;    
     }	
-	/*
+
 	v.y += 9.8*dt;
-	if(p.y > 1)
+	
+	if (radius_test(p.xyz,0.3))
 	{
-		v.y *= -1;
-		v.xyz *= friction;
-		p.xyz += v.xyz*dt;
-	}else
-		p.xyz += v.xyz*dt;*/
-	float3 reflection = v.xyz;
-	v.y += 9.8*dt;
-	if( ((-0.5 < p.x && p.x < 0.5) && (-0.5 < p.y && p.y < 0.5) && (-0.5 < p.z && p.z < 0.5)))
-	{
-		reflection = 2 * p.xyz * ((p.x * v.x) + (p.y * v.y) + (p.z * v.z)) - v.xyz;
-		v.xyz = reflection;	
-		p.xyz += v.xyz *dt * friction;
-	//v.xyz *= -1 * friction;
+		//collision with sphere
+		//compute new position according to the reflected velocity (by spherepoint's normal) 
+		float3 reflection = v.xyz - 2 * p.xyz * dot(p.xyz,v.xyz);
+		v.xyz = reflection;
+		p.xyz += reflection *dt ;
 	}else
 	{
+	//compute new position with standart velocity
 	p.xyz += v.xyz*dt;
 	}
+	
 	//store the updated life in the velocity array
     v.w = life;
 
@@ -50,4 +50,7 @@ __kernel void part2(__global float4* pos,  __global float4* vel, __global float4
     pos[i] = p;
     vel[i] = v;
 }
+
+
+
 

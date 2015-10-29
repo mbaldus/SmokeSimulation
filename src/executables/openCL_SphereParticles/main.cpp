@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 100000
+#define NUM_PARTICLES 10000
 
 #include <myCL/cll.h>
 #include <Util/util.h>
@@ -19,7 +19,7 @@ float rand_float(float mn, float mx)
 int main(void) {
 	printf("OpenCL Particles\n");
 	
-	GLFWwindow* window = GLTools::generateWindow(1280,720,100,100,"Part2 Demo");
+	GLFWwindow* window = GLTools::generateWindow(1280,720,100,100,"SphereSpawn Demo");
 
 	Trackball trackball(GLTools::getWidth(window),GLTools::getHeight(window));
 	
@@ -27,7 +27,7 @@ int main(void) {
 
 	double xpos,ypos;
     
-	std::string kernel_source = loadfromfile(KERNELS_PATH "/part2.cl");
+	std::string kernel_source = loadfromfile(KERNELS_PATH "/sphereCollision.cl");
     example->loadProgram(kernel_source);
 	
 	//initialize our particle system with positions, velocities and color
@@ -35,6 +35,7 @@ int main(void) {
 	std::vector<glm::vec4> pos(num);
 	std::vector<glm::vec4> vel(num);
 
+	//spawn in circle
 	////fill vectors with initial data
 	//for (int i = 0; i <num; i++)
 	//{
@@ -59,24 +60,23 @@ int main(void) {
 
 	//spawn on sphere
 	//fill vectors with initial data
+	float radius = 0.31f;
 	for (int i = 0; i <num; i++)
 	{
-		float rand = rand_float(0.0f ,1.0f);
 		float thetha = rand_float(0,3.14f);
 		float phi = rand_float(0, 2*3.14f);
 		
-		float radius = 1.0f;
 		float x = radius * cos(phi)*sin(thetha);
 		float y = radius * cos(thetha);
 		float z = radius * sin(thetha)*sin(phi);
 
 		pos[i] = glm::vec4(x,y,z,1.0f);
 
-		printf("pos: %f,%f,%f\n", pos[i].x, pos[i].y, pos[i].z);
+		//printf("pos: %f,%f,%f\n", pos[i].x, pos[i].y, pos[i].z);
 		
 		float life_r =rand_float(0.0f,1.0f);
 		float rand_y = rand_float(-1.0,3);
-		glm::vec3 initial_vel =  glm::vec3(x*5,y*5,z*5);
+		glm::vec3 initial_vel =  glm::vec3(x*3,y*3,z*3);
 		
 		//printf("life: %f\n", life_r);
 		vel[i] = glm::vec4(initial_vel, life_r);
@@ -85,13 +85,32 @@ int main(void) {
 	}
 
 
+	//spawn on plane
+	//for (int i = 0; i <num; i++)
+	//{
+	//	float x = rand_float(-1.0,1.0);
+	//	float z = rand_float(-0.5,0.5);
+	//	float y = -1;
+	//	pos[i] = glm::vec4(x,y,z,1.0f);
+	//	//printf("pos: %f,%f,%f\n", pos[i].x, pos[i].y, pos[i].z);
+	//	
+	//	float life_r =rand_float(0.0f,1.0f);
+	//	float rand_y = rand_float(-1.0,3);
+	//	glm::vec3 initial_vel =  glm::vec3(x,rand_y,z);
+	//	
+	//	//printf("life: %f\n", life_r);
+	//	vel[i] = glm::vec4(initial_vel, life_r);
+	//	
+	//	//printf("vel: %f,%f,%f\n", vel[i].x, vel[i].y, vel[i].z);
+	//}
+
 	example->loadData(pos,vel); 
 	example->genKernel();
 
 	//###################################################################
 	//				GL ShaderProgram and Camera Settings
 
-	ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/simpleFS.frag");
+	ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/sphereFS.frag");
 	
 	glm::mat4 model = glm::mat4(1.0f);
 	glm::mat4 view = glm::lookAt(glm::vec3(0.0f,-0.1f,1.0f),glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,1.0f,0.0f));
@@ -99,7 +118,6 @@ int main(void) {
 	shaderprogram->update("model",model);
 	shaderprogram->update("view",view);
 	shaderprogram->update("projection",projection);
-
 	//###################################################################
 
 	//reverse gravity
