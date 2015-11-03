@@ -110,7 +110,6 @@ void CLparticles::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> ve
 	
 	//create VBO's (util.cpp)
 	p_vbo = createVBO(&pos[0], array_size, 4, 0); //id 1
-	//c_vbo = createVBO(&col[0], array_size, 4, 2); //id 2
 
 	//make sure OpenGL is finishedn before proceeding
 	glFinish();
@@ -130,6 +129,40 @@ void CLparticles::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> ve
 	m_err = m_queue.enqueueWriteBuffer(cl_velocities, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_pos_gen, CL_TRUE,0, array_size, &pos[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_vel_gen, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
+	m_queue.finish();
+}
+
+void CLparticles::loadSphData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity)
+{
+	//store number of particles and the size of bytes of our arrays
+	m_num = pos.size();
+	array_size = m_num * sizeof(glm::vec4);
+	float_size = m_num * sizeof(float);
+	
+	//create VBO's (util.cpp)
+	p_vbo = createVBO(&pos[0], array_size, 4, 0); //id 1
+
+	//make sure OpenGL is finishedn before proceeding
+	glFinish();
+
+	//create OpenCL buffer from GL VBO
+	cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, p_vbo, &m_err));
+	//cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, c_vbo, &m_err));
+
+	//create OpenCL only arrays
+	cl_velocities = cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
+	cl_density =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
+	cl_pressure =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
+	cl_viscosity =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
+
+
+	printf("Pushing data to the GPU \n");
+	//push CPU arrays to the GPU 
+	//data is thightly packed in std::vector starting with the adress of the first element
+	m_err = m_queue.enqueueWriteBuffer(cl_velocities, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_density, CL_TRUE,0, float_size, &density[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_pressure, CL_TRUE,0, float_size, &pressure[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_viscosity, CL_TRUE,0, float_size, &viscosity[0], NULL, &m_event);
 	m_queue.finish();
 }
 
@@ -164,6 +197,64 @@ void CLparticles::genKernel()
 	//Wait for the command queue to finish these commands before proceeding
     m_queue.finish();
 	printf("cll.cpp: out: genKernel()\n######################################################\n");
+}
+
+void CLparticles::genSphKernel()
+{
+	printf("cll: in genKernel\n");
+
+	//initialize our kernel from the program
+	try
+	{
+		//name of the string must be same as defined in the cl.file
+		m_kernel = cl::Kernel(m_program, "SPH", &m_err);
+	}catch(cl::Error er)
+	{
+		printf("cll.cpp: Error: %s(%d)\n", er.what(), er.err()); 
+	}
+	printf("cll.cpp: generated Kernel\n");
+	//set the arguments of the kernel
+	try
+	{
+		m_err = m_kernel.setArg(0,cl_vbos[0]);
+		m_err = m_kernel.setArg(1,cl_velocities);
+		m_err = m_kernel.setArg(2,cl_density);
+		m_err = m_kernel.setArg(3,cl_pressure);
+		m_err = m_kernel.setArg(4,cl_viscosity);
+
+	}catch(cl::Error er)
+	{
+		printf("ERROR: %s\n", er.what(), oclErrorString(er.err()));
+	}
+	printf("cll.cpp: set Kernelarguments\n");
+	
+	//Wait for the command queue to finish these commands before proceeding
+    m_queue.finish();
+	printf("cll.cpp: out: genKernel()\n######################################################\n");
+}
+
+void CLparticles::runKernel()
+{
+
+	//update the system by calculating new velocities and updating positions of particles
+	//make sure openGL is done using VBO's
+	glFinish();
+
+	//map OpenGL buffer object for writing from OpenCL
+	//this passes in the vector of VBO buffer objects (position and color)
+	m_err = m_queue.enqueueAcquireGLObjects(&cl_vbos, NULL, &m_event);
+	m_queue.finish();
+
+	float dt = 0.003f;
+	m_kernel.setArg(5, dt); //pass the timestamp
+	//execute the kernel
+	m_err = m_queue.enqueueNDRangeKernel(m_kernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
+	m_queue.finish();
+	
+	//release the vbos so OpenGL can play with them
+	m_err = m_queue.enqueueReleaseGLObjects(&cl_vbos, NULL, &m_event);
+	m_queue.finish();
+
 }
 
 void CLparticles::runKernel(int reverse)

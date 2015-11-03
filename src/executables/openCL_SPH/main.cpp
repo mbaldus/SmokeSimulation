@@ -20,7 +20,7 @@ float rand_float(float mn, float mx)
 int main(void) {
 	printf("OpenCL Particles\n");
 	
-	GLFWwindow* window = GLTools::generateWindow(1280,720,100,100,"SphereSpawn Demo");
+	GLFWwindow* window = GLTools::generateWindow(1280,720,100,100,"SPH Demo");
 
 	Trackball trackball(GLTools::getWidth(window),GLTools::getHeight(window));
 	Sphere* sphere = new Sphere(0.25);
@@ -36,7 +36,10 @@ int main(void) {
 	int num = NUM_PARTICLES;
 	std::vector<glm::vec4> pos(num);
 	std::vector<glm::vec4> vel(num);
-
+	std::vector<float> density(num);
+	std::vector<float> pressure(num);
+	std::vector<float> viscosity(num);
+	
 	//spawn on sphere
 	//fill vectors with initial data
 	//float radius = 0.31f;
@@ -81,10 +84,13 @@ int main(void) {
 		vel[i] = glm::vec4(initial_vel, life_r);
 		
 		//printf("vel: %f,%f,%f\n", vel[i].x, vel[i].y, vel[i].z);
+		density[i] = 1.0f;
+		pressure[i] = 1.0f;
+		viscosity[i] = 1.0f;
 	}
 
-	example->loadData(pos,vel); 
-	example->genKernel();
+	example->loadSphData(pos,vel,density,pressure,viscosity); 
+	example->genSphKernel();
 
 	//###################################################################
 	//				GL ShaderProgram and Camera Settings
@@ -117,14 +123,6 @@ int main(void) {
 		shaderprogram->use();
 		trackball.update(window,view);
 		shaderprogram->update("view", view);
-
-		//some mousebuttonfun that reverses the gravity
-		if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) == GLFW_PRESS)
-		{
-			reverse = 1;
-		}else {
-			reverse = 0;
-		}
 		
 		//render sphere in grey
 		sphereColor=true;
@@ -133,7 +131,7 @@ int main(void) {
 		sphereColor=false;
 		shaderprogram->update("sphereColor", sphereColor);
 
-		example->runKernel(reverse);
+		example->runKernel();
 		example->render();
 		
 		

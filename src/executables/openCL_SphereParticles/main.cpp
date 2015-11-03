@@ -29,7 +29,7 @@ int main(void) {
 
 	double xpos,ypos;
     
-	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPH.cl");
+	std::string kernel_source = loadfromfile(KERNELS_PATH "/sphereCollision.cl");
     example->loadProgram(kernel_source);
 	
 	//initialize our particle system with positions, velocities and color

@@ -30,10 +30,17 @@ class CLparticles
 		cl::Buffer cl_pos_gen;		//want to have the start points reseting particles
 		cl::Buffer cl_vel_gen;		//want to have the start velocities for reseting particles
 		
+		//SPH parameters and Buffers
+		cl::Buffer cl_density;
+		cl::Buffer cl_pressure;
+		cl::Buffer cl_viscosity;
+		cl::Buffer cl_mass;
+		
 		int p_vbo; //position VBO
 		int c_vbo; //color VBO
 		int m_num; //nuber of particles
 		size_t array_size; //the size of our arrays num * sizeof(Vec4)
+		size_t float_size;
 
 		//default constructor initializes OpenCL Context and chooses platform and device
 		CLparticles();
@@ -47,10 +54,15 @@ class CLparticles
 		//setup the data for the kernel
 		void loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel);//, std::vector<glm::vec4> color);
 		
+		void loadSphData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity);
 		//setup data for the kernela
 		void genKernel();
+
+		void genSphKernel();
 		
 		//execute the kernel
+		void runKernel();
+
 		void runKernel(int reverse);
 
 		void render();
