@@ -193,12 +193,7 @@ void CLparticles::runKernel(int reverse)
 
 void CLparticles::render()
 {
-	glDisable(GL_DEPTH_TEST);
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	
-
 	//render Particles from VBOS
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -206,7 +201,7 @@ void CLparticles::render()
 	glPointSize(5.0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, p_vbo); //p_vbo is 0
-	glEnableVertexAttribArray(0);
+	//glEnableVertexAttribArray(0);
 	
 	glDrawArrays(GL_POINTS, 0, m_num);
 

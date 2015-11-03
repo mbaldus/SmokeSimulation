@@ -15,6 +15,8 @@ __kernel void part2(__global float4* pos,  __global float4* vel, __global float4
 
 	float friction = 1;
 	float normal = 1;
+	float mass = -0.5;
+	float gravity = 9.8 * mass;
 
     //we've stored the life in the fourth component of our velocity array
     float life = vel[i].w;
@@ -28,7 +30,7 @@ __kernel void part2(__global float4* pos,  __global float4* vel, __global float4
         life = 1.0;    
     }	
 
-	v.y += 9.8*dt;
+	v.y -= gravity*dt;
 	
 	if (radius_test(p.xyz,0.3))
 	{
