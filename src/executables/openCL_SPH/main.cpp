@@ -11,11 +11,7 @@
 #include <GL/ShaderProgram.h>
 #include <GL/CVK_Sphere.h>
  
-float rand_float(float mn, float mx)
-{
-    float r = rand() / (float) RAND_MAX;
-    return mn + (mx-mn)*r;
-}
+
 
 int main(void) {
 	printf("OpenCL Particles\n");

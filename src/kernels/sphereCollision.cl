@@ -28,8 +28,15 @@ __kernel void sphereCollision(__global float4* pos,  __global float4* vel, __glo
         life = 1.0;    
     }	
 
-	v.y += 9.8*dt;
-	
+	if (reverse==0)
+	{
+	v.y += 9.81*dt;
+	}else 
+	{
+		v.y -= 9.81*dt;
+	}
+
+
 	if (radius_test(p.xyz,0.3))
 	{
 		//collision with sphere
