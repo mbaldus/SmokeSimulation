@@ -4,7 +4,7 @@
 
 #define NUM_PARTICLES 10000
 
-#include <myCL/cll.h>
+#include <myCL/clSph.h>
 #include <Util/util.h>
 #include <GL/GLTools.h>
 #include <GL/CVK_Trackball.h>
@@ -25,12 +25,10 @@ int main(void) {
 	Trackball trackball(GLTools::getWidth(window),GLTools::getHeight(window));
 	Sphere* sphere = new Sphere(0.25);
 	
-	CLparticles* example = new CLparticles();
-
-	double xpos,ypos;
+	CLsph* sph = new CLsph();
     
 	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPH.cl");
-    example->loadProgram(kernel_source);
+    sph->loadProgram(kernel_source);
 	
 	//initialize our particle system with positions, velocities and color
 	int num = NUM_PARTICLES;
@@ -89,8 +87,8 @@ int main(void) {
 		viscosity[i] = 1.0f;
 	}
 
-	example->loadSphData(pos,vel,density,pressure,viscosity); 
-	example->genSphKernel();
+	sph->loadData(pos,vel,density,pressure,viscosity); 
+	sph->genKernel();
 
 	//###################################################################
 	//				GL ShaderProgram and Camera Settings
@@ -105,16 +103,14 @@ int main(void) {
 	shaderprogram->update("projection",projection);
 	//###################################################################
 
-	//reverse gravity
-	int reverse = 0;
 	bool sphereColor = true;
 
 	std::function<void(double)> loop = 
-		[&example,
+		[&sph,
 		&shaderprogram,
 		&trackball, &sphere,
 		&view, 
-		&xpos, &ypos, &reverse, &sphereColor,
+		&sphereColor,
 		&window](double deltatime)
 	{
 		glEnable(GL_DEPTH_TEST);
@@ -131,8 +127,8 @@ int main(void) {
 		sphereColor=false;
 		shaderprogram->update("sphereColor", sphereColor);
 
-		example->runKernel();
-		example->render();
+		sph->runKernel();
+		sph->render();
 		
 		
 	};
@@ -142,7 +138,7 @@ int main(void) {
 	//cleanup
 	GLTools::destroyWindow(window);
 	delete shaderprogram;
-	delete example;
+	delete sph;
 	delete sphere;
    return 0;
 }

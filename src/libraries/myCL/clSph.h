@@ -1,9 +1,7 @@
-#ifndef CL2_H
-#define CL2_H
+#ifndef CLSPH_H
+#define CLSPH_H
 
 #define __CL_ENABLE_EXCEPTIONS
-
-
 
 #include <vector>
 #include <stdio.h>
@@ -21,14 +19,12 @@
 
 #include <glm/glm.hpp>
 
-class CLparticles
+class CLsph
 {
 	public:
 
 		std::vector<cl::Memory> cl_vbos; //0: position VBO, 1: color VBO
 		cl::Buffer cl_velocities;	//particle velocity
-		cl::Buffer cl_pos_gen;		//want to have the start points reseting particles
-		cl::Buffer cl_vel_gen;		//want to have the start velocities for reseting particles
 		
 		//SPH parameters and Buffers
 		cl::Buffer cl_density;
@@ -43,27 +39,21 @@ class CLparticles
 		size_t float_size;
 
 		//default constructor initializes OpenCL Context and chooses platform and device
-		CLparticles();
+		CLsph();
 		//default deconstructor releases OpenCL objects and frees device memory
-		~CLparticles();
+		~CLsph();
 
 		//load OpenCL program from a file
 		//pass in the kernel source code as a string. 
 		void loadProgram(std::string kernel_source);
 
 		//setup the data for the kernel
-		void loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel);//, std::vector<glm::vec4> color);
-		
-		void loadSphData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity);
+		void loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity);
 		//setup data for the kernela
 		void genKernel();
-
-		void genSphKernel();
 		
 		//execute the kernel
 		void runKernel();
-
-		void runKernel(int reverse);
 
 		void render();
 
@@ -85,4 +75,4 @@ class CLparticles
 		cl::Event m_event;
 };
 
-#endif //CL2_H
+#endif //CLSPH_H

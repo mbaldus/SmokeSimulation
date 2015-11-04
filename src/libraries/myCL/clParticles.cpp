@@ -1,24 +1,21 @@
-
-#include "cll.h"
-
+#include "clParticles.h"
 
 CLparticles::CLparticles()
 {
-	printf("cll.cpp: in: Constructor\n");
-	printf("cll.cpp: Initialize OpenCL Object and context \n");
+	printf("Initialize OpenCL Object and context \n");
 
 	std::vector<cl::Platform> platforms;
 	m_err = cl::Platform::get(&platforms);
-	printf("cll.cpp: cl::Platform::get(): %s\n\n", oclErrorString(m_err));
-	printf("cll.cpp: Number of platforms: %d\n", platforms.size());
+	printf("cl::Platform::get(): %s\n\n", oclErrorString(m_err));
+	printf("Number of platforms: %d\n", platforms.size());
 
 	if (platforms.size() == 0 )
 	{
-		printf("cll.cpp: Platform size 0\n");
+		printf("Platform size 0\n");
 	}
 
-	std::cout << "cll.cpp: Platform 0: "<<platforms[0].getInfo<CL_PLATFORM_NAME>()<<"\n";
-	std::cout << "cll.cpp: Platform 1: "<<platforms[1].getInfo<CL_PLATFORM_NAME>()<<"\n";
+	std::cout << "Platform 0: "<<platforms[0].getInfo<CL_PLATFORM_NAME>()<<"\n";
+	std::cout << "Platform 1: "<<platforms[1].getInfo<CL_PLATFORM_NAME>()<<"\n";
 	
 	m_devicesUsed = 0;
 	
@@ -30,32 +27,32 @@ CLparticles::CLparticles()
 				CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[1])(), 0
 			};
 	
-	std::cout << "cll.cpp: Using Platform 1: "<<platforms[1].getInfo<CL_PLATFORM_NAME>()<<"\n\n";
+	std::cout << "Using Platform 1: "<<platforms[1].getInfo<CL_PLATFORM_NAME>()<<"\n\n";
 	
 	//set the GPU to be the device
 	try{
 	m_context = cl::Context(CL_DEVICE_TYPE_GPU, properties);
 	}catch (cl::Error er)
 	{
-		printf("cll.cpp: Error: %s(%d)\n", er.what(), er.err());
+		printf("Error: %s(%d)\n", er.what(), er.err());
 	}
 	
 	//get Devices from Context
 	m_devices = m_context.getInfo<CL_CONTEXT_DEVICES>();
-	printf("cll.cpp: Number of devices: %d\n", m_devices.size());
+	printf("Number of devices: %d\n", m_devices.size());
 	//print out Device Name
-	std::cout << "cll.cpp: Device 0: "<<m_devices[0].getInfo<CL_DEVICE_NAME>()<<"\n";
-	std::cout << "cll.cpp: Using Device 0: "<<m_devices[0].getInfo<CL_DEVICE_NAME>()<<"\n\n";
+	std::cout << "Device 0: "<<m_devices[0].getInfo<CL_DEVICE_NAME>()<<"\n";
+	std::cout << "Using Device 0: "<<m_devices[0].getInfo<CL_DEVICE_NAME>()<<"\n\n";
 	//create command queue
 	try
 	{
 		m_queue = cl::CommandQueue(m_context, m_devices[m_devicesUsed], 0, &m_err);
 	}catch(cl::Error er)
 	{
-		printf("cll.cpp: Error: %s(%d)\n", er.what(), er.err());
+		printf("Error: %s(%d)\n", er.what(), er.err());
 	}
 	
-	printf("cll.cpp: out: Constructor: OpenCL has been initialized \n###################################################### \n");
+	printf("OpenCL has been initialized \n###################################################### \n");
 }
 
 CLparticles::~CLparticles()
@@ -64,41 +61,38 @@ CLparticles::~CLparticles()
 
 void CLparticles::loadProgram(std::string kernel_source)
 {
-	printf("cll.cpp: in: loadProgram()\n");
 	//Program Setup
-
-
 	int program_length;
 
-	printf("cll.cpp: load the program \n");
+	printf("load the program \n");
 	program_length = kernel_source.size();
-	printf("cll.cpp: kernel size %d\n" ,program_length);
+	printf("kernel size %d\n" ,program_length);
 
 	try
 	{
 		cl::Program::Sources source (1,  std::make_pair(kernel_source.c_str(), program_length));
 		m_program = cl::Program(m_context, source);
-		printf("cll.cpp: build program\n");
+		printf("build program\n");
 	}catch(cl::Error er)
 	{
-		printf("cll.cpp: Error: %s(%s)\n", er.what(), oclErrorString(er.err()));
+		printf("Error: %s(%s)\n", er.what(), oclErrorString(er.err()));
 	}
-	//printf("cll.cpp: build program\n");
+	//printf("build program\n");
 
 	try
 	{
 		m_err = m_program.build(m_devices);
 	}catch(cl::Error er)
 	{
-		printf("cll.cpp: program.build: %s\n", oclErrorString(er.err()));
+		printf("program.build: %s\n", oclErrorString(er.err()));
 	}
 
-	printf("cll.cpp: done building program \n");
-	std::cout << "cll.cpp: Build Status: " << m_program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(m_devices[0]) << std::endl;
-	std::cout << "cll.cpp: Build Options: " << m_program.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(m_devices[0]) << std::endl;
-	std::cout << "cll.cpp: Build LOG: " << m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_devices[0]) << std::endl;
+	printf("done building program \n");
+	std::cout << "Build Status: " << m_program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(m_devices[0]) << std::endl;
+	std::cout << "Build Options: " << m_program.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(m_devices[0]) << std::endl;
+	std::cout << "Build LOG: " << m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_devices[0]) << std::endl;
 
-	printf("cll.cpp: out: loadProgram()\n######################################################\n");
+	printf("######################################################\n");
 
 }
 
@@ -132,54 +126,21 @@ void CLparticles::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> ve
 	m_queue.finish();
 }
 
-void CLparticles::loadSphData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity)
-{
-	//store number of particles and the size of bytes of our arrays
-	m_num = pos.size();
-	array_size = m_num * sizeof(glm::vec4);
-	float_size = m_num * sizeof(float);
-	
-	//create VBO's (util.cpp)
-	p_vbo = createVBO(&pos[0], array_size, 4, 0); //id 1
-
-	//make sure OpenGL is finishedn before proceeding
-	glFinish();
-
-	//create OpenCL buffer from GL VBO
-	cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, p_vbo, &m_err));
-	//cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, c_vbo, &m_err));
-
-	//create OpenCL only arrays
-	cl_velocities = cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
-	cl_density =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
-	cl_pressure =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
-	cl_viscosity =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
-
-
-	printf("Pushing data to the GPU \n");
-	//push CPU arrays to the GPU 
-	//data is thightly packed in std::vector starting with the adress of the first element
-	m_err = m_queue.enqueueWriteBuffer(cl_velocities, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_density, CL_TRUE,0, float_size, &density[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_pressure, CL_TRUE,0, float_size, &pressure[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_viscosity, CL_TRUE,0, float_size, &viscosity[0], NULL, &m_event);
-	m_queue.finish();
-}
 
 void CLparticles::genKernel()
 {
-	printf("cll: in genKernel\n");
+	printf("genKernel\n");
 
 	//initialize our kernel from the program
 	try
 	{
 		//name of the string must be same as defined in the cl.file
-		m_kernel = cl::Kernel(m_program, "part2", &m_err);
+		m_kernel = cl::Kernel(m_program, "sphereCollision", &m_err);
 	}catch(cl::Error er)
 	{
-		printf("cll.cpp: Error: %s(%d)\n", er.what(), er.err()); 
+		printf("Error: %s(%d)\n", er.what(), er.err()); 
 	}
-	printf("cll.cpp: generated Kernel\n");
+	printf("generated Kernel\n");
 	//set the arguments of the kernel
 	try
 	{
@@ -192,46 +153,13 @@ void CLparticles::genKernel()
 	{
 		printf("ERROR: %s\n", er.what(), oclErrorString(er.err()));
 	}
-	printf("cll.cpp: set Kernelarguments\n");
+	printf("set Kernelarguments\n");
 	
 	//Wait for the command queue to finish these commands before proceeding
     m_queue.finish();
-	printf("cll.cpp: out: genKernel()\n######################################################\n");
+	printf("######################################################\n");
 }
 
-void CLparticles::genSphKernel()
-{
-	printf("cll: in genKernel\n");
-
-	//initialize our kernel from the program
-	try
-	{
-		//name of the string must be same as defined in the cl.file
-		m_kernel = cl::Kernel(m_program, "SPH", &m_err);
-	}catch(cl::Error er)
-	{
-		printf("cll.cpp: Error: %s(%d)\n", er.what(), er.err()); 
-	}
-	printf("cll.cpp: generated Kernel\n");
-	//set the arguments of the kernel
-	try
-	{
-		m_err = m_kernel.setArg(0,cl_vbos[0]);
-		m_err = m_kernel.setArg(1,cl_velocities);
-		m_err = m_kernel.setArg(2,cl_density);
-		m_err = m_kernel.setArg(3,cl_pressure);
-		m_err = m_kernel.setArg(4,cl_viscosity);
-
-	}catch(cl::Error er)
-	{
-		printf("ERROR: %s\n", er.what(), oclErrorString(er.err()));
-	}
-	printf("cll.cpp: set Kernelarguments\n");
-	
-	//Wait for the command queue to finish these commands before proceeding
-    m_queue.finish();
-	printf("cll.cpp: out: genKernel()\n######################################################\n");
-}
 
 void CLparticles::runKernel()
 {

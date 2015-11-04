@@ -4,7 +4,7 @@
 
 #define NUM_PARTICLES 10000
 
-#include <myCL/cll.h>
+#include <myCL/clParticles.h>
 #include <Util/util.h>
 #include <GL/GLTools.h>
 #include <GL/CVK_Trackball.h>
