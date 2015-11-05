@@ -97,7 +97,7 @@ void CLsph::loadProgram(std::string kernel_source)
 }
 
 
-void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity)
+void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass)
 {
 	//store number of particles and the size of bytes of our arrays
 	m_num = pos.size();
@@ -119,6 +119,7 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	cl_density =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_pressure =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_viscosity =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
+	cl_mass =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 
 
 	printf("Pushing data to the GPU \n");
@@ -128,13 +129,16 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	m_err = m_queue.enqueueWriteBuffer(cl_density, CL_TRUE,0, float_size, &density[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_pressure, CL_TRUE,0, float_size, &pressure[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_viscosity, CL_TRUE,0, float_size, &viscosity[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_mass, CL_TRUE,0, float_size, &mass[0], NULL, &m_event);
 	m_queue.finish();
 }
 
 void CLsph::genKernel()
 {
 	printf("genKernel\n");
-
+	
+	//pass the timestamp
+	float dt = 0.003f;
 	//initialize our kernel from the program
 	try
 	{
@@ -153,6 +157,8 @@ void CLsph::genKernel()
 		m_err = m_kernel.setArg(2,cl_density);
 		m_err = m_kernel.setArg(3,cl_pressure);
 		m_err = m_kernel.setArg(4,cl_viscosity);
+		m_err = m_kernel.setArg(5,cl_mass);
+		m_err = m_kernel.setArg(6,dt);
 
 	}catch(cl::Error er)
 	{
@@ -177,8 +183,7 @@ void CLsph::runKernel()
 	m_err = m_queue.enqueueAcquireGLObjects(&cl_vbos, NULL, &m_event);
 	m_queue.finish();
 
-	float dt = 0.003f;
-	m_kernel.setArg(5, dt); //pass the timestamp
+	 
 	//execute the kernel
 	m_err = m_queue.enqueueNDRangeKernel(m_kernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
 	m_queue.finish();

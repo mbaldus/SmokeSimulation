@@ -48,7 +48,12 @@ class CLsph
 		void loadProgram(std::string kernel_source);
 
 		//setup the data for the kernel
-		void loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity);
+		void loadData(std::vector<glm::vec4> pos, 
+					  std::vector<glm::vec4> vel, 
+					  std::vector<float> density, 
+					  std::vector<float> pressure, 
+					  std::vector<float> viscosity,
+					  std::vector<float> mass);
 		//setup data for the kernela
 		void genKernel();
 		

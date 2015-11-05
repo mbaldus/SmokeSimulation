@@ -33,6 +33,7 @@ int main(void) {
 	std::vector<float> density(num);
 	std::vector<float> pressure(num);
 	std::vector<float> viscosity(num);
+	std::vector<float> mass(num);
 	
 	//spawn on sphere
 	//fill vectors with initial data
@@ -81,9 +82,10 @@ int main(void) {
 		density[i] = 1.0f;
 		pressure[i] = 1.0f;
 		viscosity[i] = 1.0f;
+		mass[i] = 1.0f;
 	}
 
-	sph->loadData(pos,vel,density,pressure,viscosity); 
+	sph->loadData(pos,vel,density,pressure,viscosity,mass); 
 	sph->genKernel();
 
 	//###################################################################
