@@ -4,19 +4,13 @@
 
 #define NUM_PARTICLES 10000
 
-#include <myCL/cll.h>
+#include <myCL/clParticles.h>
 #include <Util/util.h>
 #include <GL/GLTools.h>
 #include <GL/CVK_Trackball.h>
 #include <GL/ShaderProgram.h>
 #include <GL/CVK_Sphere.h>
  
-float rand_float(float mn, float mx)
-{
-    float r = rand() / (float) RAND_MAX;
-    return mn + (mx-mn)*r;
-}
-
 int main(void) {
 	printf("OpenCL Particles\n");
 	
@@ -29,7 +23,7 @@ int main(void) {
 
 	double xpos,ypos;
     
-	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPH.cl");
+	std::string kernel_source = loadfromfile(KERNELS_PATH "/sphereCollision.cl");
     example->loadProgram(kernel_source);
 	
 	//initialize our particle system with positions, velocities and color
