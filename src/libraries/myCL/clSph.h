@@ -31,6 +31,8 @@ class CLsph
 		cl::Buffer cl_pressure;
 		cl::Buffer cl_viscosity;
 		cl::Buffer cl_mass;
+
+		float dt;
 		
 		int p_vbo; //position VBO
 		int c_vbo; //color VBO
@@ -55,8 +57,10 @@ class CLsph
 					  std::vector<float> viscosity,
 					  std::vector<float> mass);
 		//setup data for the kernela
-		void genKernel();
+		void genSPHKernel();
 		
+		void genIntegrationKernel();
+
 		//execute the kernel
 		void runKernel();
 

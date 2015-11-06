@@ -4,6 +4,8 @@ CLsph::CLsph()
 {
 	printf("Initialize OpenCL Object and context \n");
 
+	dt = 0.003f;
+
 	std::vector<cl::Platform> platforms;
 	m_err = cl::Platform::get(&platforms);
 	printf("cl::Platform::get(): %s\n\n", oclErrorString(m_err));
@@ -133,12 +135,11 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	m_queue.finish();
 }
 
-void CLsph::genKernel()
+void CLsph::genSPHKernel()
 {
-	printf("genKernel\n");
+	printf("genSPHKernel\n");
 	
-	//pass the timestamp
-	float dt = 0.003f;
+
 	//initialize our kernel from the program
 	try
 	{
