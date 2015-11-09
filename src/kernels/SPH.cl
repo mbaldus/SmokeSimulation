@@ -6,6 +6,9 @@ float weightFunction(float pDistance, float h)
 	else return 0;
 }
 
+__kernel void neighbours(__global float4* pos)
+{
+}
 
 __kernel void SPH(__global float4* pos,  __global float4* vel, __global float* density, __global float4* pressure, __global float* viscosity, __global float* mass, float dt)
 {

@@ -4,6 +4,11 @@
 
 #define NUM_PARTICLES 10000
 
+#define NEIGHBOURS 0
+#define SPH 1
+#define INTEGRATION 2
+
+
 #include <myCL/clSph.h>
 #include <Util/util.h>
 #include <GL/GLTools.h>
@@ -126,8 +131,9 @@ int main(void) {
 		sphereColor=false;
 		shaderprogram->update("sphereColor", sphereColor);
 
-		sph->runKernel(1); //1 == Sph
-		sph->runKernel(2); //2 == Integration
+		//sph->runKernel(NEIGHBOURS) //0 == Nachbarschaftssuche
+		sph->runKernel(SPH); //1 == Sph
+		sph->runKernel(INTEGRATION); //2 == Integration
 
 		sph->render();
 		

@@ -60,6 +60,7 @@ class CLsph
 					  std::vector<float> mass);
 
 		//setup data for the kernela
+		void genNeighboursKernel();
 		void genSPHKernel();
 		void genIntegrationKernel();
 
@@ -79,6 +80,7 @@ class CLsph
 		cl::Context m_context;
 		cl::CommandQueue m_queue;
 		cl::Program m_program;
+		cl::Kernel m_NeighboursKernel;
 		cl::Kernel m_SphKernel;
 		cl::Kernel m_IntegrationKernel;
 		

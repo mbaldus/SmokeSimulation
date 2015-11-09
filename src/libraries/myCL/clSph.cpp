@@ -66,7 +66,7 @@ void CLsph::loadProgram(std::string kernel_source)
 	//Program Setup
 	int program_length;
 
-	printf("load the sph program \n");
+	printf("LOAD SPH PROGRAM \n");
 	program_length = kernel_source.size();
 	printf("kernel size %d\n" ,program_length);
 
@@ -100,6 +100,7 @@ void CLsph::loadProgram(std::string kernel_source)
 
 void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass)
 {
+	printf("LOAD DATA \n");
 	//store number of particles and the size of bytes of our arrays
 	m_num = pos.size();
 	array_size = m_num * sizeof(glm::vec4);
@@ -132,6 +133,38 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	m_err = m_queue.enqueueWriteBuffer(cl_viscosity, CL_TRUE,0, float_size, &viscosity[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_mass, CL_TRUE,0, float_size, &mass[0], NULL, &m_event);
 	m_queue.finish();
+	printf("######################################################\n");
+}
+
+void CLsph::genNeighboursKernel()
+{
+	printf("genNeighboursKernel\n");
+	
+
+	//initialize our kernel from the program
+	try
+	{
+		//name of the string must be same as defined in the cl.file
+		m_NeighboursKernel = cl::Kernel(m_program, "neighbours", &m_err);
+	}catch(cl::Error er)
+	{
+		printf("Error: %s(%d)\n", er.what(), er.err()); 
+	}
+	printf("generated neighbours kernel\n");
+	//set the arguments of the kernel
+	try
+	{
+		m_err = m_NeighboursKernel.setArg(0,cl_vbos[0]);
+
+	}catch(cl::Error er)
+	{
+		printf("ERROR: %s\n", er.what(), oclErrorString(er.err()));
+	}
+	printf("done setting kernelarguments\n");
+	
+	//Wait for the command queue to finish these commands before proceeding
+    m_queue.finish();
+	printf("######################################################\n");
 }
 
 void CLsph::genSPHKernel()
@@ -148,7 +181,7 @@ void CLsph::genSPHKernel()
 	{
 		printf("Error: %s(%d)\n", er.what(), er.err()); 
 	}
-	printf("generated Kernel\n");
+	printf("generated sph kernel\n");
 	//set the arguments of the kernel
 	try
 	{
@@ -164,7 +197,7 @@ void CLsph::genSPHKernel()
 	{
 		printf("ERROR: %s\n", er.what(), oclErrorString(er.err()));
 	}
-	printf("set Kernelarguments\n");
+	printf("done setting kernelarguments\n");
 	
 	//Wait for the command queue to finish these commands before proceeding
     m_queue.finish();
@@ -185,7 +218,7 @@ void CLsph::genIntegrationKernel()
 	{
 		printf("Error: %s(%d)\n", er.what(), er.err()); 
 	}
-	printf("generated integration Kernel\n");
+	printf("generated integration kernel\n");
 	//set the arguments of the kernel
 	try
 	{
@@ -201,7 +234,7 @@ void CLsph::genIntegrationKernel()
 	{
 		printf("ERROR: %s\n", er.what(), oclErrorString(er.err()));
 	}
-	printf("set Kernelarguments\n");
+	printf("done setting kernelarguments\n");
 	
 	//Wait for the command queue to finish these commands before proceeding
     m_queue.finish();
@@ -222,6 +255,11 @@ void CLsph::runKernel(int kernelnumber)
 
 	 
 	//execute the kernel
+	//0 == Neighbours
+	if(kernelnumber == 0)
+	{
+		m_err = m_queue.enqueueNDRangeKernel(m_NeighboursKernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
+	}
 	//1 == SPH
 	if(kernelnumber == 1)
 	{
