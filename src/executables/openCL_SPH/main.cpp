@@ -5,8 +5,9 @@
 #define NUM_PARTICLES 10000
 
 #define NEIGHBOURS 0
-#define SPH 1
-#define INTEGRATION 2
+#define DENSITY 1
+#define SPH 2
+#define INTEGRATION 3
 
 
 #include <myCL/clSph.h>
@@ -35,53 +36,29 @@ int main(void) {
 	int num = NUM_PARTICLES;
 	std::vector<glm::vec4> pos(num);
 	std::vector<glm::vec4> vel(num);
+	std::vector<int> neighbours(num*50);
 	std::vector<float> density(num);
 	std::vector<float> pressure(num);
 	std::vector<float> viscosity(num);
 	std::vector<float> mass(num);
 	
-	//spawn on sphere
-	//fill vectors with initial data
-	//float radius = 0.31f;
-	//for (int i = 0; i <num; i++)
-	//{
-	//	float thetha = rand_float(0,3.14f);
-	//	float phi = rand_float(0, 2*3.14f);
-	//	
-	//	float x = radius * cos(phi)*sin(thetha);
-	//	float y = radius * cos(thetha);
-	//	float z = radius * sin(thetha)*sin(phi);
-
-	//	pos[i] = glm::vec4(x,y,z,1.0f);
-
-	//	//printf("pos: %f,%f,%f\n", pos[i].x, pos[i].y, pos[i].z);
-	//	
-	//	float life_r =rand_float(0.0f,1.0f);
-	//	float rand_y = rand_float(-1.0,3);
-	//	glm::vec3 initial_vel =  glm::vec3(x*3,y*3,z*3);
-	//	
-	//	//printf("life: %f\n", life_r);
-	//	vel[i] = glm::vec4(initial_vel, life_r);
-	//	//vel[i] = glm::vec4(0,0,0, life_r);
-	//	//printf("vel: %f,%f,%f\n", vel[i].x, vel[i].y, vel[i].z);
-	//}
-
-
 	//spawn on plane
 	for (int i = 0; i <num; i++)
 	{
-		float x = rand_float(-0.1,0.1);
-		float z = rand_float(0.0,0.1);
-		float y = -0.5;
+		float x = rand_float(-0.25,0.25);
+		float z = rand_float(-0.25,0.25);
+		float y = rand_float(-0.25,0.25);
 		pos[i] = glm::vec4(x,y,z,1.0f);
 		//printf("pos: %f,%f,%f\n", pos[i].x, pos[i].y, pos[i].z);
 		
-		float life_r =rand_float(0.0f,1.0f);
-		float rand_y = rand_float(-1.0,3);
-		glm::vec3 initial_vel =  glm::vec3(x,rand_y,z);
+		//float life_r =rand_float(0.0f,1.0f);
+		//float rand_y = rand_float(-1.0,3);
+		//glm::vec3 initial_vel =  glm::vec3(x,rand_y,z);
 		
 		//printf("life: %f\n", life_r);
-		vel[i] = glm::vec4(initial_vel, life_r);
+		//vel[i] = glm::vec4(initial_vel, life_r);
+		
+		vel[i] = glm::vec4(0,0,0,0);
 		
 		//printf("vel: %f,%f,%f\n", vel[i].x, vel[i].y, vel[i].z);
 		density[i] = 1.0f;
@@ -90,7 +67,9 @@ int main(void) {
 		mass[i] = 1.0f;
 	}
 	
-	sph->loadData(pos,vel,density,pressure,viscosity,mass); 
+	sph->loadData(pos,vel,neighbours,density,pressure,viscosity,mass); 
+	sph->genNeighboursKernel();
+	sph->genDensityKernel();
 	sph->genIntegrationKernel();
 	sph->genSPHKernel();
 
@@ -108,13 +87,14 @@ int main(void) {
 	//###################################################################
 
 	bool sphereColor = true;
+	
 
 	std::function<void(double)> loop = 
 		[&sph,
 		&shaderprogram,
 		&trackball, &sphere,
 		&view, 
-		&sphereColor,
+		&sphereColor, &neighbours,
 		&window](double deltatime)
 	{
 		glEnable(GL_DEPTH_TEST);
@@ -127,17 +107,16 @@ int main(void) {
 		//render sphere in grey
 		sphereColor=true;
 		shaderprogram->update("sphereColor", sphereColor);
-		sphere->render();	
+	//	sphere->render();	
 		sphereColor=false;
 		shaderprogram->update("sphereColor", sphereColor);
 
-		//sph->runKernel(NEIGHBOURS) //0 == Nachbarschaftssuche
-		sph->runKernel(SPH); //1 == Sph
-		sph->runKernel(INTEGRATION); //2 == Integration
+		sph->runKernel(NEIGHBOURS);  //0 == Nachbarschaftssuche
+		sph->runKernel(DENSITY);	 //1 == Dichte und Druckberechnung
+		sph->runKernel(SPH);		 //2 == Sph
+		sph->runKernel(INTEGRATION); //3 == Integration
 
 		sph->render();
-		
-		
 	};
 	
 	GLTools::render(window, loop);

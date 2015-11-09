@@ -5,6 +5,7 @@ CLsph::CLsph()
 	printf("Initialize OpenCL Object and context \n");
 
 	dt = 0.003f;
+	smoothingLength = 0.5f;
 
 	std::vector<cl::Platform> platforms;
 	m_err = cl::Platform::get(&platforms);
@@ -98,12 +99,13 @@ void CLsph::loadProgram(std::string kernel_source)
 
 }
 
-void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass)
+void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<int> neighbours, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass)
 {
 	printf("LOAD DATA \n");
 	//store number of particles and the size of bytes of our arrays
 	m_num = pos.size();
 	array_size = m_num * sizeof(glm::vec4);
+	int_size = m_num * sizeof(int) * 50;
 	float_size = m_num * sizeof(float);
 	
 	//create VBO's (util.cpp)
@@ -118,6 +120,7 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 
 	//create OpenCL only arrays
 	cl_velocities = cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
+	cl_neighbours = cl::Buffer(m_context, CL_MEM_READ_WRITE, int_size, NULL, &m_err); 
 	cl_density =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_pressure =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_viscosity =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
@@ -128,6 +131,7 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	//push CPU arrays to the GPU 
 	//data is thightly packed in std::vector starting with the adress of the first element
 	m_err = m_queue.enqueueWriteBuffer(cl_velocities, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_neighbours, CL_TRUE,0, int_size, &neighbours[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_density, CL_TRUE,0, float_size, &density[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_pressure, CL_TRUE,0, float_size, &pressure[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_viscosity, CL_TRUE,0, float_size, &viscosity[0], NULL, &m_event);
@@ -155,6 +159,44 @@ void CLsph::genNeighboursKernel()
 	try
 	{
 		m_err = m_NeighboursKernel.setArg(0,cl_vbos[0]);
+		m_err = m_NeighboursKernel.setArg(1,cl_neighbours);
+		m_err = m_NeighboursKernel.setArg(2,smoothingLength);
+		m_err = m_NeighboursKernel.setArg(3,cl_mass);
+	}catch(cl::Error er)
+	{
+		printf("ERROR: %s\n", er.what(), oclErrorString(er.err()));
+	}
+	printf("done setting kernelarguments\n");
+	
+	//Wait for the command queue to finish these commands before proceeding
+    m_queue.finish();
+	printf("######################################################\n");
+}
+
+void CLsph::genDensityKernel()
+{
+	printf("genDensityKernel\n");
+	
+
+	//initialize our kernel from the program
+	try
+	{
+		//name of the string must be same as defined in the cl.file
+		m_DensityKernel = cl::Kernel(m_program, "densityCalc", &m_err);
+	}catch(cl::Error er)
+	{
+		printf("Error: %s(%d)\n", er.what(), er.err()); 
+	}
+	printf("generated densityCalculation kernel\n");
+	//set the arguments of the kernel
+	try
+	{
+		m_err = m_DensityKernel.setArg(0,cl_vbos[0]);
+		m_err = m_DensityKernel.setArg(1,cl_neighbours);
+		m_err = m_DensityKernel.setArg(2,cl_density);
+		m_err = m_DensityKernel.setArg(3,cl_pressure);
+		m_err = m_DensityKernel.setArg(4,cl_mass);
+		m_err = m_DensityKernel.setArg(5,smoothingLength);
 
 	}catch(cl::Error er)
 	{
@@ -260,19 +302,28 @@ void CLsph::runKernel(int kernelnumber)
 	{
 		m_err = m_queue.enqueueNDRangeKernel(m_NeighboursKernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
 	}
-	//1 == SPH
+	//1 == Density
 	if(kernelnumber == 1)
+	{
+		m_err = m_queue.enqueueNDRangeKernel(m_DensityKernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
+	}
+	//2 == SPH
+	if(kernelnumber == 2)
 	{
 		m_err = m_queue.enqueueNDRangeKernel(m_SphKernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
 	}
-	//2 == Integration
-	if(kernelnumber == 2)
+	//3 == Integration
+	if(kernelnumber == 3)
 	{
 		m_err = m_queue.enqueueNDRangeKernel(m_IntegrationKernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
 	}
 	
-	
+	try{
 	m_queue.finish();
+	}catch(cl::Error er)
+	{
+		printf("Error: %s(%d)\n", er.what(), er.err());
+	}
 	
 	//release the vbos so OpenGL can play with them
 	m_err = m_queue.enqueueReleaseGLObjects(&cl_vbos, NULL, &m_event);

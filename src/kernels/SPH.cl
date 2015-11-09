@@ -6,8 +6,49 @@ float weightFunction(float pDistance, float h)
 	else return 0;
 }
 
-__kernel void neighbours(__global float4* pos)
+__kernel void neighbours(__global float4* pos, __global int* neighbour, float smoothingLength, __global float* mass)
 {
+	unsigned int i = get_global_id(0);
+	float4 p = pos[i];
+	
+	int counter = 0;
+	//save neighbours of THIS particle in an array 
+	//array size is 50(n) times bigger than pos[]
+	for (int index = 0; index < get_global_size(0); index++)
+	{
+		if (distance(p.xyz, pos[index].xyz) < 1) // < smoothingLength
+		{
+			neighbour[i*50+counter] = index;
+			counter++;
+
+			//debugging commands
+			mass[i] = -1;
+		}
+		//stop when 50(n) neighbours of i are found
+		if (counter >= 49)
+			break;
+	}
+}
+
+__kernel void densityCalc(__global float4* pos, __global int* neighbour, __global float* density, __global float* pressure, __global float* mass, float smoothingLength)
+{
+	unsigned int i = get_global_id(0);
+
+	float4 p = pos[i];
+	float rho = 0;
+	float pressure_new = 0;
+	
+	for(int index = 0; index < 50; index++)
+	{
+		//rho += mass[i*50+index] * weightFunction(distance(p.xyz, neighbour[i*50+index].xyz), smoothingLength); 
+		rho += mass[neighbour[i*50+index]] * weightFunction(distance(p.xyz, pos[neighbour[i*50+index]].xyz), smoothingLength); 
+
+	}
+
+	density[i] = rho;
+
+	pressure_new = rho * 1; //p = rho * k (k = stoffspezifische Konstante (Wasser 999kg/m³)) 
+	//pressure_new = 1 * (pow((rho/1),7) - 1); //p  = k * (pow((rho[i]/rho0),7) - 1); 
 }
 
 __kernel void SPH(__global float4* pos,  __global float4* vel, __global float* density, __global float4* pressure, __global float* viscosity, __global float* mass, float dt)
@@ -18,12 +59,6 @@ __kernel void SPH(__global float4* pos,  __global float4* vel, __global float* d
 	//float4 v = vel[i];
 	float dens = 0.0f;
 	float radius = 1.0f;
-
-	//for (int count = 0 ; count < get_global_size(0); count++)
-	//{
-	//	//get_global_id(0);
-	//	dens += 1 * weightFunction(distance(p.xyz,pos[count].xyz),radius);
-	//}
 
 	//float friction = 1;
 	//float normal = 1;
