@@ -25,7 +25,7 @@ int main(void) {
     
 	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPH.cl");
     sph->loadProgram(kernel_source);
-	
+
 	//initialize our particle system with positions, velocities and color
 	int num = NUM_PARTICLES;
 	std::vector<glm::vec4> pos(num);
@@ -84,9 +84,10 @@ int main(void) {
 		viscosity[i] = 1.0f;
 		mass[i] = 1.0f;
 	}
-
+	
 	sph->loadData(pos,vel,density,pressure,viscosity,mass); 
-	sph->genKernel();
+	sph->genIntegrationKernel();
+	sph->genSPHKernel();
 
 	//###################################################################
 	//				GL ShaderProgram and Camera Settings
@@ -125,7 +126,9 @@ int main(void) {
 		sphereColor=false;
 		shaderprogram->update("sphereColor", sphereColor);
 
-		sph->runKernel();
+		sph->runKernel(1); //1 == Sph
+		sph->runKernel(2); //2 == Integration
+
 		sph->render();
 		
 		

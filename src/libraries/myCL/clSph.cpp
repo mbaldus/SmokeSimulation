@@ -66,7 +66,7 @@ void CLsph::loadProgram(std::string kernel_source)
 	//Program Setup
 	int program_length;
 
-	printf("load the program \n");
+	printf("load the sph program \n");
 	program_length = kernel_source.size();
 	printf("kernel size %d\n" ,program_length);
 
@@ -74,7 +74,7 @@ void CLsph::loadProgram(std::string kernel_source)
 	{
 		cl::Program::Sources source (1,  std::make_pair(kernel_source.c_str(), program_length));
 		m_program = cl::Program(m_context, source);
-		printf("build program\n");
+		printf("build sph program\n");
 	}catch(cl::Error er)
 	{
 		printf("Error: %s(%s)\n", er.what(), oclErrorString(er.err()));
@@ -89,7 +89,7 @@ void CLsph::loadProgram(std::string kernel_source)
 		printf("program.build: %s\n", oclErrorString(er.err()));
 	}
 
-	printf("done building program \n");
+	printf("done building sph program \n");
 	std::cout << "Build Status: " << m_program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(m_devices[0]) << std::endl;
 	std::cout << "Build Options: " << m_program.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(m_devices[0]) << std::endl;
 	std::cout << "Build LOG: " << m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_devices[0]) << std::endl;
@@ -97,7 +97,6 @@ void CLsph::loadProgram(std::string kernel_source)
 	printf("######################################################\n");
 
 }
-
 
 void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass)
 {
@@ -144,7 +143,7 @@ void CLsph::genSPHKernel()
 	try
 	{
 		//name of the string must be same as defined in the cl.file
-		m_kernel = cl::Kernel(m_program, "SPH", &m_err);
+		m_SphKernel = cl::Kernel(m_program, "SPH", &m_err);
 	}catch(cl::Error er)
 	{
 		printf("Error: %s(%d)\n", er.what(), er.err()); 
@@ -153,13 +152,13 @@ void CLsph::genSPHKernel()
 	//set the arguments of the kernel
 	try
 	{
-		m_err = m_kernel.setArg(0,cl_vbos[0]);
-		m_err = m_kernel.setArg(1,cl_velocities);
-		m_err = m_kernel.setArg(2,cl_density);
-		m_err = m_kernel.setArg(3,cl_pressure);
-		m_err = m_kernel.setArg(4,cl_viscosity);
-		m_err = m_kernel.setArg(5,cl_mass);
-		m_err = m_kernel.setArg(6,dt);
+		m_err = m_SphKernel.setArg(0,cl_vbos[0]);
+		m_err = m_SphKernel.setArg(1,cl_velocities);
+		m_err = m_SphKernel.setArg(2,cl_density);
+		m_err = m_SphKernel.setArg(3,cl_pressure);
+		m_err = m_SphKernel.setArg(4,cl_viscosity);
+		m_err = m_SphKernel.setArg(5,cl_mass);
+		m_err = m_SphKernel.setArg(6,dt);
 
 	}catch(cl::Error er)
 	{
@@ -172,7 +171,44 @@ void CLsph::genSPHKernel()
 	printf("######################################################\n");
 }
 
-void CLsph::runKernel()
+void CLsph::genIntegrationKernel()
+{
+	printf("genIntegrationKernel\n");
+	
+
+	//initialize our kernel from the program
+	try
+	{
+		//name of the string must be same as defined in the cl.file
+		m_IntegrationKernel = cl::Kernel(m_program, "integration", &m_err);
+	}catch(cl::Error er)
+	{
+		printf("Error: %s(%d)\n", er.what(), er.err()); 
+	}
+	printf("generated integration Kernel\n");
+	//set the arguments of the kernel
+	try
+	{
+		m_err = m_IntegrationKernel.setArg(0,cl_vbos[0]);
+		m_err = m_IntegrationKernel.setArg(1,cl_velocities);
+		m_err = m_IntegrationKernel.setArg(2,cl_density);
+		m_err = m_IntegrationKernel.setArg(3,cl_pressure);
+		m_err = m_IntegrationKernel.setArg(4,cl_viscosity);
+		m_err = m_IntegrationKernel.setArg(5,cl_mass);
+		m_err = m_IntegrationKernel.setArg(6,dt);
+
+	}catch(cl::Error er)
+	{
+		printf("ERROR: %s\n", er.what(), oclErrorString(er.err()));
+	}
+	printf("set Kernelarguments\n");
+	
+	//Wait for the command queue to finish these commands before proceeding
+    m_queue.finish();
+	printf("######################################################\n");
+}
+
+void CLsph::runKernel(int kernelnumber)
 {
 
 	//update the system by calculating new velocities and updating positions of particles
@@ -186,7 +222,18 @@ void CLsph::runKernel()
 
 	 
 	//execute the kernel
-	m_err = m_queue.enqueueNDRangeKernel(m_kernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
+	//1 == SPH
+	if(kernelnumber == 1)
+	{
+		m_err = m_queue.enqueueNDRangeKernel(m_SphKernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
+	}
+	//2 == Integration
+	if(kernelnumber == 2)
+	{
+		m_err = m_queue.enqueueNDRangeKernel(m_IntegrationKernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
+	}
+	
+	
 	m_queue.finish();
 	
 	//release the vbos so OpenGL can play with them

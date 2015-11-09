@@ -47,7 +47,9 @@ class CLsph
 
 		//load OpenCL program from a file
 		//pass in the kernel source code as a string. 
+			
 		void loadProgram(std::string kernel_source);
+		
 
 		//setup the data for the kernel
 		void loadData(std::vector<glm::vec4> pos, 
@@ -56,13 +58,13 @@ class CLsph
 					  std::vector<float> pressure, 
 					  std::vector<float> viscosity,
 					  std::vector<float> mass);
+
 		//setup data for the kernela
 		void genSPHKernel();
-		
 		void genIntegrationKernel();
 
 		//execute the kernel
-		void runKernel();
+		void runKernel(int kernelnumber);
 
 		void render();
 
@@ -77,7 +79,8 @@ class CLsph
 		cl::Context m_context;
 		cl::CommandQueue m_queue;
 		cl::Program m_program;
-		cl::Kernel m_kernel;
+		cl::Kernel m_SphKernel;
+		cl::Kernel m_IntegrationKernel;
 		
 		//debugging variables
 		cl_int m_err;
