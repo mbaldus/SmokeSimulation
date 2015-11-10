@@ -49,37 +49,34 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 
 	pressure_new = rho * 1; //p = rho * k (k = stoffspezifische Konstante (Wasser 999kg/m³)) 
 	//pressure_new = 1 * (pow((rho/1),7) - 1); //p  = k * (pow((rho[i]/rho0),7) - 1); 
+
+	pressure = pressure_new;
 }
 
-__kernel void SPH(__global float4* pos,  __global float4* vel, __global float* density, __global float4* pressure, __global float* viscosity, __global float* mass, float dt)
+__kernel void SPH(__global float4* pos,  __global int* neighbour, __global float* density, __global float* pressure, __global float* viscosity, __global float* mass, __global float* forceIntern, float dt)
 {
     unsigned int i = get_global_id(0);
 
-	//float4 p = pos[i];
-	//float4 v = vel[i];
-	float dens = 0.0f;
-	float radius = 1.0f;
+	float viscosityTerm = 1.0f; //mü
 
-	//float friction = 1;
-	//float normal = 1;
-	//float masse = -0.5;
-	//float gravity = 9.8;
+	float f_pressure = 0.0f;
+	float f_viscosity = 0.0f;
 
-	//v.y -= gravity*dt;
-	//
-	////compute new position with standart velocity
-	//p.xyz += v.xyz*dt;
-	
-	//store the updated life in the velocity array
+	//force calculation
+	for(int index = 0; index < 50; index++)
+	{
+	//fpressure calculation
+	f_pressure += mass[neighbour[i*50+index]] * ((pressure[i] + pressure[neighbour[i*50+index]])/2*density[neighbour[i*50+index]]);//* derivated W
+	f_viscosity +=  mass[neighbour[i*50+index]] * ((viscosity[neighbour[i*50+index]] - viscosity[i])/density[neighbour[i*50+index]]); //*second derivated W
+	}
 
-    //update the arrays with our newly computed values
-   /* pos[i] = p;
-    vel[i] = v;*/
-
-	mass[i] = -0.2;
+	f_pressure *= -1.0f;
+	f_viscosity *= viscosityTerm;
+//	forceIntern[i] = f_pressure + f_viscosity;
+	mass[i] = -0.8;
 }
 
-__kernel void integration(__global float4* pos,  __global float4* vel, __global float* density, __global float4* pressure, __global float* viscosity, __global float* mass, float dt)
+__kernel void integration(__global float4* pos,  __global float4* vel, __global float* mass, __global float* forceIntern, float dt)
 {
     unsigned int i = get_global_id(0);
 
@@ -91,11 +88,10 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 
 	float gravity = -9.81f * mass[i];
 
-	//apply gravity
-	v_new.y = v_old.y + gravity * dt;
-
-	//apply intern forces
-	//v_new.xyz = v_old.xyz + fpressure + fviscosity;
+	//apply intern forces and extern forces
+	v_new.x = v_old.x + forceIntern[i] * dt;
+	v_new.y = v_old.y + forceIntern[i] + gravity * dt;
+	v_new.z = v_old.z + forceIntern[i] * dt;
 
 	//compute new position with computed velocity
 	p_new.xyz = p_old.xyz + v_new.xyz * dt;

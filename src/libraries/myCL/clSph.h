@@ -32,6 +32,7 @@ class CLsph
 		cl::Buffer cl_pressure;
 		cl::Buffer cl_viscosity;
 		cl::Buffer cl_mass;
+		cl::Buffer cl_forceIntern;
 
 		float dt;
 		float smoothingLength;
@@ -61,7 +62,8 @@ class CLsph
 					  std::vector<float> density, 
 					  std::vector<float> pressure, 
 					  std::vector<float> viscosity,
-					  std::vector<float> mass);
+					  std::vector<float> mass,
+					  std::vector<float> forceIntern);
 
 		//setup data for the kernela
 		void genNeighboursKernel();

@@ -99,7 +99,7 @@ void CLsph::loadProgram(std::string kernel_source)
 
 }
 
-void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<int> neighbours, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass)
+void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<int> neighbours, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass,std::vector<float> forceIntern)
 {
 	printf("LOAD DATA \n");
 	//store number of particles and the size of bytes of our arrays
@@ -125,6 +125,7 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	cl_pressure =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_viscosity =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_mass =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
+	cl_forceIntern =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 
 
 	printf("Pushing data to the GPU \n");
@@ -136,6 +137,7 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	m_err = m_queue.enqueueWriteBuffer(cl_pressure, CL_TRUE,0, float_size, &pressure[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_viscosity, CL_TRUE,0, float_size, &viscosity[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_mass, CL_TRUE,0, float_size, &mass[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_forceIntern, CL_TRUE,0, float_size, &forceIntern[0], NULL, &m_event);
 	m_queue.finish();
 	printf("######################################################\n");
 }
@@ -228,12 +230,13 @@ void CLsph::genSPHKernel()
 	try
 	{
 		m_err = m_SphKernel.setArg(0,cl_vbos[0]);
-		m_err = m_SphKernel.setArg(1,cl_velocities);
+		m_err = m_SphKernel.setArg(1,cl_neighbours);
 		m_err = m_SphKernel.setArg(2,cl_density);
 		m_err = m_SphKernel.setArg(3,cl_pressure);
 		m_err = m_SphKernel.setArg(4,cl_viscosity);
 		m_err = m_SphKernel.setArg(5,cl_mass);
-		m_err = m_SphKernel.setArg(6,dt);
+		m_err = m_SphKernel.setArg(6,cl_forceIntern);
+		m_err = m_SphKernel.setArg(7,dt);
 
 	}catch(cl::Error er)
 	{
@@ -266,11 +269,9 @@ void CLsph::genIntegrationKernel()
 	{
 		m_err = m_IntegrationKernel.setArg(0,cl_vbos[0]);
 		m_err = m_IntegrationKernel.setArg(1,cl_velocities);
-		m_err = m_IntegrationKernel.setArg(2,cl_density);
-		m_err = m_IntegrationKernel.setArg(3,cl_pressure);
-		m_err = m_IntegrationKernel.setArg(4,cl_viscosity);
-		m_err = m_IntegrationKernel.setArg(5,cl_mass);
-		m_err = m_IntegrationKernel.setArg(6,dt);
+		m_err = m_IntegrationKernel.setArg(2,cl_mass);
+		m_err = m_IntegrationKernel.setArg(3,cl_forceIntern);
+		m_err = m_IntegrationKernel.setArg(4,dt);
 
 	}catch(cl::Error er)
 	{

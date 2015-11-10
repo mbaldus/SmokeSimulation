@@ -41,6 +41,7 @@ int main(void) {
 	std::vector<float> pressure(num);
 	std::vector<float> viscosity(num);
 	std::vector<float> mass(num);
+	std::vector<float> forceIntern(num);
 	
 	//spawn on plane
 	for (int i = 0; i <num; i++)
@@ -65,9 +66,10 @@ int main(void) {
 		pressure[i] = 1.0f;
 		viscosity[i] = 1.0f;
 		mass[i] = 1.0f;
+		forceIntern[i] = 0.0f;
 	}
 	
-	sph->loadData(pos,vel,neighbours,density,pressure,viscosity,mass); 
+	sph->loadData(pos,vel,neighbours,density,pressure,viscosity,mass,forceIntern); 
 	sph->genNeighboursKernel();
 	sph->genDensityKernel();
 	sph->genIntegrationKernel();
