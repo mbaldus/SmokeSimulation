@@ -5,8 +5,13 @@ CLsph::CLsph()
 	printf("Initialize OpenCL Object and context \n");
 
 	dt = 0.003f;
-	smoothingLength = 0.03f;
+	smoothingLength = 1.0f;
 	poly6 = 315/(64*3.14159265358*pow(smoothingLength,9));
+	spiky = 15/(3.14159265358*pow(smoothingLength,6));
+	visConst = 15/(2*3.14159265358*pow(smoothingLength,3));
+
+	printf("Constants: \n dt = %f \n smoothingLength = %f \n poly6 = %f \n spiky = %f \n visConst = %f \n", 
+		   dt, smoothingLength, poly6, spiky, visConst);
 
 	std::vector<cl::Platform> platforms;
 	m_err = cl::Platform::get(&platforms);
@@ -240,7 +245,8 @@ void CLsph::genSPHKernel()
 		m_err = m_SphKernel.setArg(6,cl_mass);
 		m_err = m_SphKernel.setArg(7,cl_forceIntern);
 		m_err = m_SphKernel.setArg(8,smoothingLength);
-		m_err = m_SphKernel.setArg(9,poly6);
+		m_err = m_SphKernel.setArg(9,spiky);
+		m_err = m_SphKernel.setArg(10,visConst);
 
 	}catch(cl::Error er)
 	{

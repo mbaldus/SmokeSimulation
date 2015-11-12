@@ -65,7 +65,7 @@ int main(void) {
 		density[i] = 0.0f;
 		pressure[i] = 1.0f;
 		viscosity[i] = 1.0f;
-		mass[i] = 0.00001f;
+		mass[i] = 0.01f;
 		forceIntern[i] = glm::vec4(0,0,0,0);
 	}
 	

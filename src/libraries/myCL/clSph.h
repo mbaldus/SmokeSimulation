@@ -37,6 +37,8 @@ class CLsph
 
 		float dt;
 		float poly6;
+		float spiky;
+		float visConst;
 		float smoothingLength;
 		
 		int p_vbo; //position VBO
