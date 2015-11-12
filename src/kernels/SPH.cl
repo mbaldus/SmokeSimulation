@@ -95,9 +95,9 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
 	//printf("fpressure[%d] : x=%f,y=%f,z=%f \n", 30, f_pressure.x, f_pressure.y, f_pressure.z) ;
 	f_viscosity.xyz *= viscosityConst;
 	//printf("fviscosity[%d] : x=%f,y=%f,z=%f \n", i, f_viscosity.x, f_viscosity.y, f_viscosity.z) ;
-	forceIntern[i].xyz = f_pressure.xyz;// + f_viscosity;
+	//forceIntern[i].xyz = f_pressure.xyz + f_viscosity.xyz;
 
-	//printf("forceIntern[%d] : x=%f,y=%f,z=%f \n", i, forceIntern[i].x*0.003, forceIntern[i].y*0.003, forceIntern[i].z*0.003) ;
+//	printf("forceIntern[%d] : x=%f,y=%f,z=%f \n", i, forceIntern[i].x*0.003, forceIntern[i].y*0.003, forceIntern[i].z*0.003) ;
 }
 
 __kernel void integration(__global float4* pos,  __global float4* vel, __global float* density, __global float4* forceIntern, float dt)
@@ -117,15 +117,15 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 	v_new.y = v_old.y + forceIntern[i].y + gravity * dt;
 	v_new.z = v_old.z + forceIntern[i].z * dt;
 
-	if(p_old.y < -1){
+	if(p_old.y < -0.35){
 		v_new.y *= -1;
 	}
 	//compute new position with computed velocity
 	p_new.xyz = p_old.xyz + v_new.xyz * dt ;
 	
     //update the arrays with newly computed values
-    pos[i] = p_new;
-    vel[i] = v_new;
+    pos[i].xyz = p_new.xyz;
+    vel[i].xyz = v_new.xyz;
 }
 
 

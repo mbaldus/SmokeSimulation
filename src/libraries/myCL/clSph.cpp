@@ -4,8 +4,8 @@ CLsph::CLsph()
 {
 	printf("Initialize OpenCL Object and context \n");
 
-	dt = 0.00000000003f;
-	smoothingLength = 0.3f;
+	dt = 0.003f;
+	smoothingLength = 0.03f;
 	poly6 = 315/(64*3.14159265358*pow(smoothingLength,9));
 
 	std::vector<cl::Platform> platforms;
