@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
+#include <math.h>
 
 #include <CL/cl.hpp>
 
@@ -35,6 +36,7 @@ class CLsph
 		cl::Buffer cl_forceIntern;
 
 		float dt;
+		float poly6;
 		float smoothingLength;
 		
 		int p_vbo; //position VBO
@@ -63,7 +65,7 @@ class CLsph
 					  std::vector<float> pressure, 
 					  std::vector<float> viscosity,
 					  std::vector<float> mass,
-					  std::vector<float> forceIntern);
+					  std::vector<glm::vec4> forceIntern);
 
 		//setup data for the kernela
 		void genNeighboursKernel();

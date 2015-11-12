@@ -4,8 +4,9 @@ CLsph::CLsph()
 {
 	printf("Initialize OpenCL Object and context \n");
 
-	dt = 0.003f;
-	smoothingLength = 0.5f;
+	dt = 0.00000000003f;
+	smoothingLength = 0.3f;
+	poly6 = 315/(64*3.14159265358*pow(smoothingLength,9));
 
 	std::vector<cl::Platform> platforms;
 	m_err = cl::Platform::get(&platforms);
@@ -99,7 +100,7 @@ void CLsph::loadProgram(std::string kernel_source)
 
 }
 
-void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<int> neighbours, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass,std::vector<float> forceIntern)
+void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<int> neighbours, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass,std::vector<glm::vec4> forceIntern)
 {
 	printf("LOAD DATA \n");
 	//store number of particles and the size of bytes of our arrays
@@ -125,7 +126,7 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	cl_pressure =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_viscosity =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_mass =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
-	cl_forceIntern =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
+	cl_forceIntern =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
 
 
 	printf("Pushing data to the GPU \n");
@@ -137,7 +138,7 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	m_err = m_queue.enqueueWriteBuffer(cl_pressure, CL_TRUE,0, float_size, &pressure[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_viscosity, CL_TRUE,0, float_size, &viscosity[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_mass, CL_TRUE,0, float_size, &mass[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_forceIntern, CL_TRUE,0, float_size, &forceIntern[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_forceIntern, CL_TRUE,0, array_size, &forceIntern[0], NULL, &m_event);
 	m_queue.finish();
 	printf("######################################################\n");
 }
@@ -199,6 +200,7 @@ void CLsph::genDensityKernel()
 		m_err = m_DensityKernel.setArg(3,cl_pressure);
 		m_err = m_DensityKernel.setArg(4,cl_mass);
 		m_err = m_DensityKernel.setArg(5,smoothingLength);
+		m_err = m_DensityKernel.setArg(6,poly6);
 
 	}catch(cl::Error er)
 	{
@@ -230,13 +232,15 @@ void CLsph::genSPHKernel()
 	try
 	{
 		m_err = m_SphKernel.setArg(0,cl_vbos[0]);
-		m_err = m_SphKernel.setArg(1,cl_neighbours);
-		m_err = m_SphKernel.setArg(2,cl_density);
-		m_err = m_SphKernel.setArg(3,cl_pressure);
-		m_err = m_SphKernel.setArg(4,cl_viscosity);
-		m_err = m_SphKernel.setArg(5,cl_mass);
-		m_err = m_SphKernel.setArg(6,cl_forceIntern);
-		m_err = m_SphKernel.setArg(7,dt);
+		m_err = m_SphKernel.setArg(1,cl_velocities);
+		m_err = m_SphKernel.setArg(2,cl_neighbours);
+		m_err = m_SphKernel.setArg(3,cl_density);
+		m_err = m_SphKernel.setArg(4,cl_pressure);
+		m_err = m_SphKernel.setArg(5,cl_viscosity);
+		m_err = m_SphKernel.setArg(6,cl_mass);
+		m_err = m_SphKernel.setArg(7,cl_forceIntern);
+		m_err = m_SphKernel.setArg(8,smoothingLength);
+		m_err = m_SphKernel.setArg(9,poly6);
 
 	}catch(cl::Error er)
 	{
@@ -269,7 +273,7 @@ void CLsph::genIntegrationKernel()
 	{
 		m_err = m_IntegrationKernel.setArg(0,cl_vbos[0]);
 		m_err = m_IntegrationKernel.setArg(1,cl_velocities);
-		m_err = m_IntegrationKernel.setArg(2,cl_mass);
+		m_err = m_IntegrationKernel.setArg(2,cl_density);
 		m_err = m_IntegrationKernel.setArg(3,cl_forceIntern);
 		m_err = m_IntegrationKernel.setArg(4,dt);
 
@@ -296,7 +300,6 @@ void CLsph::runKernel(int kernelnumber)
 	m_err = m_queue.enqueueAcquireGLObjects(&cl_vbos, NULL, &m_event);
 	m_queue.finish();
 
-	 
 	//execute the kernel
 	//0 == Neighbours
 	if(kernelnumber == 0)
@@ -329,6 +332,35 @@ void CLsph::runKernel(int kernelnumber)
 	//release the vbos so OpenGL can play with them
 	m_err = m_queue.enqueueReleaseGLObjects(&cl_vbos, NULL, &m_event);
 	m_queue.finish();
+
+	//########################################
+	//following code is for debugging purposes
+	//
+	//	if(kernelnumber == 0)
+	//	{
+	//	int* new_neighbours = new int[m_num*50];
+	//	m_err = m_queue.enqueueReadBuffer(cl_neighbours, CL_TRUE, 0, sizeof(int)*m_num*50, new_neighbours, NULL, &m_event);
+
+	//	for(int i =0 ; i < 1000; i++)
+	//	{
+	//	printf("neighbours[%d] = %g \n", i, new_neighbours[i]);
+	//	}
+	//	m_queue.finish();
+	//	}
+
+	//if(kernelnumber == 1)
+	//	{
+	//	float* new_density = new float[m_num];
+	//	m_err = m_queue.enqueueReadBuffer(cl_density, CL_TRUE, 0, sizeof(float)*m_num, new_density, NULL, &m_event);
+
+	////	for(int i =0 ; i < 1000; i++)
+	////	{
+	//	printf("new_density[%d] = %g \n", 999, new_density[999]);
+	////	}
+	//	m_queue.finish();
+	//	}
+	//############################################	
+
 
 }
 

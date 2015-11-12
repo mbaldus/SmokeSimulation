@@ -41,7 +41,7 @@ int main(void) {
 	std::vector<float> pressure(num);
 	std::vector<float> viscosity(num);
 	std::vector<float> mass(num);
-	std::vector<float> forceIntern(num);
+	std::vector<glm::vec4> forceIntern(num);
 	
 	//spawn on plane
 	for (int i = 0; i <num; i++)
@@ -62,11 +62,11 @@ int main(void) {
 		vel[i] = glm::vec4(0,0,0,0);
 		
 		//printf("vel: %f,%f,%f\n", vel[i].x, vel[i].y, vel[i].z);
-		density[i] = 1.0f;
+		density[i] = 0.0f;
 		pressure[i] = 1.0f;
 		viscosity[i] = 1.0f;
-		mass[i] = 1.0f;
-		forceIntern[i] = 0.0f;
+		mass[i] = 0.1f;
+		forceIntern[i] = glm::vec4(0,0,0,0);
 	}
 	
 	sph->loadData(pos,vel,neighbours,density,pressure,viscosity,mass,forceIntern); 
