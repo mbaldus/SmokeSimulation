@@ -59,13 +59,13 @@ int main(void) {
 		//printf("life: %f\n", life_r);
 		//vel[i] = glm::vec4(initial_vel, life_r);
 		
-		vel[i] = glm::vec4(0,0,0,0);
+		vel[i] = glm::vec4(0.01,0.01,0.01,0);
 		
 		//printf("vel: %f,%f,%f\n", vel[i].x, vel[i].y, vel[i].z);
 		density[i] = 0.0f;
 		pressure[i] = 1.0f;
 		viscosity[i] = 1.0f;
-		mass[i] = 0.01f;
+		mass[i] = 0.001f;
 		forceIntern[i] = glm::vec4(0,0,0,0);
 	}
 	

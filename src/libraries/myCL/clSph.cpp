@@ -8,7 +8,7 @@ CLsph::CLsph()
 	smoothingLength = 1.0f;
 	poly6 = 315/(64*3.14159265358*pow(smoothingLength,9));
 	spiky = 15/(3.14159265358*pow(smoothingLength,6));
-	visConst = 15/(2*3.14159265358*pow(smoothingLength,3));
+	visConst = 45/(3.14159265358*pow(smoothingLength,6));
 
 	printf("Constants: \n dt = %f \n smoothingLength = %f \n poly6 = %f \n spiky = %f \n visConst = %f \n", 
 		   dt, smoothingLength, poly6, spiky, visConst);
@@ -280,8 +280,9 @@ void CLsph::genIntegrationKernel()
 		m_err = m_IntegrationKernel.setArg(0,cl_vbos[0]);
 		m_err = m_IntegrationKernel.setArg(1,cl_velocities);
 		m_err = m_IntegrationKernel.setArg(2,cl_density);
-		m_err = m_IntegrationKernel.setArg(3,cl_forceIntern);
-		m_err = m_IntegrationKernel.setArg(4,dt);
+		m_err = m_IntegrationKernel.setArg(3,cl_mass);
+		m_err = m_IntegrationKernel.setArg(4,cl_forceIntern);
+		m_err = m_IntegrationKernel.setArg(5,dt);
 
 	}catch(cl::Error er)
 	{

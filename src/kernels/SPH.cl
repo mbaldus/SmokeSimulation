@@ -6,7 +6,7 @@ float wPoly6(float pDistance, float h, float poly6const)
 	else return 0;
 }
 
-float wSpiky(float pDistance, float h, float spikyConst)
+float wSpikyOld(float pDistance, float h, float spikyConst)
 {
 	//poly6
 	if (0<= pDistance && pDistance <= h)
@@ -14,13 +14,29 @@ float wSpiky(float pDistance, float h, float spikyConst)
 	else return 0;
 }
 
-float wVisc(float p, float h, float visConst)
+float wSpiky(float pDistance, float h, float spikyConst)
+{
+	//wSpiky derivative
+	if (0<= pDistance && pDistance <= h)
+		return 3 * spikyConst * pow((h - pDistance),2) ;
+	else return 0;
+}
+
+float wViscOld(float p, float h, float visConst)
 {
 	//poly6
 	if (0<= p && p <= h)
 		return visConst * (-(pow(p,3)/2*pow(h,3))
 						   +(p*p/h*h)
 						   +(h/2*p) - 1);
+	else return 0;
+}
+
+float wVisc(float p, float h, float visConst)
+{
+	//wVisc laplace
+	if (0<= p && p <= h)
+		return visConst * (h-p);
 	else return 0;
 }
 
@@ -38,7 +54,7 @@ __kernel void neighbours(__global float4* pos, __global int* neighbour, float sm
 		{
 			neighbour[i*50+counter] = index;
 			counter++;
-
+			//only saves values with distance < smoothing Lenght --> [0,smoothingLength]
 			//debugging commands
 			//mass[i] = -1;
 		}
@@ -60,14 +76,14 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 	
 	for(int index = 0; index < 50; index++)
 	{
-		//rho += mass[i*50+index] * wPoly6(distance(p.xyz, neighbour[i*50+index].xyz), smoothingLength); 
 		rho += mass[neighbour[i*50+index]] * wPoly6(distance(p.xyz, pos[neighbour[i*50+index]].xyz), smoothingLength, poly6); 
-	//	rho += mass[neighbour[i*50+index]] * wPoly6(p.xyz - pos[neighbour[i*50+index]].xyz, smoothingLength, poly6); 
 	}
+	//	printf("wPoly6 [%d] -> %f:\n",i, wPoly6(distance(p.xyz, pos[neighbour[i*50+1]].xyz), smoothingLength, poly6));
 
 	density[i] = rho;
-
+	
 	pressure_new = rho * 1; //p = rho * k (k = stoffspezifische Konstante (Wasser 999kg/m³)) 
+
 	//pressure_new = 1 * (pow((rho/1),7) - 1); //p  = k * (pow((rho[i]/rho0),7) - 1); 
 	//if (density[i] > 0)
 	//{
@@ -92,8 +108,9 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
 	//force calculation
 	for(int index = 0; index < 50; index++)
 	{
+		int j = neighbour[i * 50 + index];
 	//fpressure calculation
-	f_pressure.x += mass[neighbour[i*50+index]] * ((pressure[i] + pressure[neighbour[i*50+index]])/2*density[neighbour[i*50+index]]) 
+	f_pressure.x += mass[j] * ((pressure[i] + pressure[j])/2*density[j]) 
 				 * wSpiky(p.x - pos[neighbour[i*50+index]].x, smoothingLength, spiky);
 	f_pressure.y += mass[neighbour[i*50+index]] * ((pressure[i] + pressure[neighbour[i*50+index]])/2*density[neighbour[i*50+index]])
 				 * wSpiky(p.y - pos[neighbour[i*50+index]].y, smoothingLength, spiky);
@@ -101,26 +118,26 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
 				 * wSpiky(p.z - pos[neighbour[i*50+index]].z, smoothingLength, spiky);
 
 	f_viscosity.x +=  mass[neighbour[i*50+index]] * (distance(vel[neighbour[i*50+index]], vel[i])/density[neighbour[i*50+index]])
-				* wVisc(p.x - pos[neighbour[i*50+index]].x, smoothingLength, visConst)
-				* wVisc(p.x - pos[neighbour[i*50+index]].x, smoothingLength, visConst); 
+				* wVisc(p.x - pos[neighbour[i*50+index]].x, smoothingLength, visConst);
 	f_viscosity.y +=  mass[neighbour[i*50+index]] * (distance(vel[neighbour[i*50+index]], vel[i])/density[neighbour[i*50+index]])
-				* wVisc(p.y - pos[neighbour[i*50+index]].y, smoothingLength, visConst)
-				* wVisc(p.y - pos[neighbour[i*50+index]].y, smoothingLength, visConst); 
+				* wVisc(p.y - pos[neighbour[i*50+index]].y, smoothingLength, visConst);
 	f_viscosity.z +=  mass[neighbour[i*50+index]] * (distance(vel[neighbour[i*50+index]], vel[i])/density[neighbour[i*50+index]])
-				* wVisc(p.z - pos[neighbour[i*50+index]].z, smoothingLength, visConst)
-				* wVisc(p.z - pos[neighbour[i*50+index]].z, smoothingLength, visConst); 
+				* wVisc(p.z - pos[neighbour[i*50+index]].z, smoothingLength, visConst);
 	}
 
+	//printf("wSpikyDerivative [%d] -> %f:\n",i, wSpiky(distance(p.xyz, pos[neighbour[i*50+1]].xyz), smoothingLength, spiky));
+	//printf("wViscosityDerivative [%d] -> %f:\n",i, wVisc(distance(p.xyz, pos[neighbour[i*50+1]].xyz), smoothingLength, visConst));
+	
 	f_pressure.xyz *= -1.0f;
 	//printf("fpressure[%d] : x= %f,y= %f,z= %f \n", i, f_pressure.x, f_pressure.y, f_pressure.z);
 	f_viscosity.xyz *= viscosityConst;
 	//printf("fviscosity[%d] : x=%f,y=%f,z=%f \n", i, f_viscosity.x, f_viscosity.y, f_viscosity.z) ;
 	forceIntern[i].xyz = f_pressure.xyz + f_viscosity.xyz;
 
-//	printf("forceIntern[%d] : x=%f,y=%f,z=%f \n", i, forceIntern[i].x*0.003, forceIntern[i].y*0.003, forceIntern[i].z*0.003) ;
+    printf("forceIntern[%d] : x=%f,y=%f,z=%f \n", i, forceIntern[i].x, forceIntern[i].y, forceIntern[i].z) ;
 }
 
-__kernel void integration(__global float4* pos,  __global float4* vel, __global float* density, __global float4* forceIntern, float dt)
+__kernel void integration(__global float4* pos,  __global float4* vel, __global float* density,__global float* mass, __global float4* forceIntern, float dt)
 {
     unsigned int i = get_global_id(0);
 
@@ -130,16 +147,16 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 	float4 v_new = v_old;
 
 
-	float gravity = -9.81f * density[i] *dt;
+	float gravity = -9.81f * mass[i] * dt;
 
 	//apply intern forces and extern forces
 	v_new.x = v_old.x + forceIntern[i].x * dt;
 	v_new.y = v_old.y + forceIntern[i].y + gravity * dt;
 	v_new.z = v_old.z + forceIntern[i].z * dt;
 
-	//if(p_old.y < -0.35){
-	//	v_new.y *= -1;
-	//}
+	/*if(p_old.y < -0.35){
+		v_new.y *= -1;
+	}*/
 	//compute new position with computed velocity
 	p_new.xyz = p_old.xyz + v_new.xyz * dt ;
 	
