@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 10000
+#define NUM_PARTICLES 100000
 
 #include <myCL/clParticles.h>
 #include <Util/util.h>
@@ -10,14 +10,16 @@
 #include <GL/CVK_Trackball.h>
 #include <GL/ShaderProgram.h>
 #include <GL/CVK_Sphere.h>
+#include <GL/Texture.h>
  
 int main(void) {
 	printf("OpenCL Particles\n");
 	
 	GLFWwindow* window = GLTools::generateWindow(1280,720,100,100,"SphereSpawn Demo");
-
+	glClearColor(0.85, 0.85, 0.85, 0.0);
 	Trackball trackball(GLTools::getWidth(window),GLTools::getHeight(window));
 	Sphere* sphere = new Sphere(0.25);
+	Texture* tex = new Texture(KERNELS_PATH "/whitePuff24.png");
 	
 	CLparticles* example = new CLparticles();
 
@@ -83,7 +85,7 @@ int main(void) {
 	//###################################################################
 	//				GL ShaderProgram and Camera Settings
 
-	ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/sphereFS.frag");
+	ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/pointSpriteSphere.frag");
 	
 	glm::mat4 model = glm::mat4(1.0f);
 	glm::mat4 view = glm::lookAt(glm::vec3(0.0f,-0.1f,1.0f),glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,1.0f,0.0f));
@@ -91,6 +93,7 @@ int main(void) {
 	shaderprogram->update("model",model);
 	shaderprogram->update("view",view);
 	shaderprogram->update("projection",projection);
+	
 	//###################################################################
 
 	//reverse gravity
@@ -107,7 +110,8 @@ int main(void) {
 	{
 		glEnable(GL_DEPTH_TEST);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		shaderprogram->use();
 		trackball.update(window,view);
 		shaderprogram->update("view", view);

@@ -22,13 +22,13 @@ if (!sphereColor)
 {
 	if (inSphere(passPosition.xyz, 0.3))
 	{
-		fragcolor = vec4(1,0,0,1);
-	//	fragcolor = texture(tex, gl_PointCoord);
+	//	fragcolor = vec4(1,0,0,1);
+		fragcolor = texture(tex, gl_PointCoord);
 	}
 	else
 	{
-	fragcolor = vec4(1,1,1,1-passPosition.y+1);
-	//fragcolor = texture(tex, gl_PointCoord);
+	//fragcolor = vec4(1,1,1,1-passPosition.y+1);
+	fragcolor = texture(tex, gl_PointCoord);
 	}
 }else
 {
