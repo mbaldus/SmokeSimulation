@@ -6,6 +6,7 @@ endif(WIN32)
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake CACHE PATH "Project specific path. Set manually if it was not found.")
 set(KERNELS_PATH ${CMAKE_SOURCE_DIR}/src/kernels CACHE PATH "Project specific path. Set manually if it was not found.")
+set(TEXTURES_PATH ${CMAKE_SOURCE_DIR}/src/textures CACHE PATH "Project specific path. Set manually if it was not found.")
 set(EXECUTABLES_PATH ${CMAKE_SOURCE_DIR}/src/executables CACHE PATH "Project specific path. Set manually if it was not found.")
 set(LIBRARIES_PATH ${CMAKE_SOURCE_DIR}/src/libraries CACHE PATH "Project specific path. Set manually if it was not found.")
 set(SHADERS_PATH ${CMAKE_SOURCE_DIR}/src/shaders CACHE PATH "Project specific path. Set manually if it was not found.")

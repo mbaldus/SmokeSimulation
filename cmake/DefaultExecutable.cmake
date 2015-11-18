@@ -23,7 +23,7 @@ file(GLOB_RECURSE HEADER *.h)
 file(GLOB_RECURSE KERNELS *.cl)
 
 add_definitions(-DSHADERS_PATH="${SHADERS_PATH}")
-add_definitions(-DRESOURCES_PATH="${RESOURCES_PATH}")
+add_definitions(-DTEXTURES_PATH="${TEXTURES_PATH}")
 add_definitions(-DKERNELS_PATH="${KERNELS_PATH}")
 add_definitions(-DGLFW_INCLUDE_GLCOREARB)
 add_definitions(-DGLEW_STATIC)

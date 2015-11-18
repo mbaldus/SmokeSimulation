@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 100000
+#define NUM_PARTICLES 10000
 
 #include <myCL/clParticles.h>
 #include <Util/util.h>
@@ -19,7 +19,7 @@ int main(void) {
 	glClearColor(0.85, 0.85, 0.85, 0.0);
 	Trackball trackball(GLTools::getWidth(window),GLTools::getHeight(window));
 	Sphere* sphere = new Sphere(0.25);
-	Texture* tex = new Texture(KERNELS_PATH "/whitePuff24.png");
+	Texture* tex = new Texture(TEXTURES_PATH "/whitePuff24.png");
 	
 	CLparticles* example = new CLparticles();
 
