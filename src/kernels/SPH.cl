@@ -18,7 +18,7 @@ float wSpiky(float pDistance, float h, float spikyConst)
 {
 	//wSpiky derivative
 	if (0<= pDistance && pDistance <= h)
-		return 3 * spikyConst * pow((h - pDistance),2) ;
+		return -3 * spikyConst * pow((h - pDistance),2) ;
 	else return 0;
 }
 
@@ -78,7 +78,7 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 	{
 		rho += mass[neighbour[i*50+index]] * wPoly6(distance(p.xyz, pos[neighbour[i*50+index]].xyz), smoothingLength, poly6); 
 	}
-	//	printf("wPoly6 [%d] -> %f:\n",i, wPoly6(distance(p.xyz, pos[neighbour[i*50+1]].xyz), smoothingLength, poly6));
+		//printf("wPoly6 [%d] -> %f:\n",i, wPoly6(distance(p.xyz, pos[neighbour[i*50+1]].xyz), smoothingLength, poly6));
 
 	density[i] = rho;
 	
@@ -126,7 +126,7 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
 	//printf("fpressure[%d] : x= %f,y= %f,z= %f \n", i, f_pressure.x, f_pressure.y, f_pressure.z);
 	f_viscosity.xyz *= viscosityConst;
 	//printf("fviscosity[%d] : x=%f,y=%f,z=%f \n", i, f_viscosity.x, f_viscosity.y, f_viscosity.z) ;
-	forceIntern[i].xyz = f_pressure.xyz + f_viscosity.xyz;
+	forceIntern[i].xyz = f_pressure.xyz;//  + f_viscosity.xyz;
 
    // printf("forceIntern[%d] : x=%f,y=%f,z=%f \n", i, forceIntern[i].x, forceIntern[i].y, forceIntern[i].z) ;
 }
@@ -141,19 +141,23 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 	float4 v_new = v_old;
 
 
-	float gravity = -9.81f * mass[i] * dt;
+	float gravityForce = -9.81f * mass[i];
 
 	//apply intern forces and extern forces
-	v_new.x = v_old.x + forceIntern[i].x * dt;
-	v_new.y = v_old.y + forceIntern[i].y + gravity * dt;
-	v_new.z = v_old.z + forceIntern[i].z * dt;
+	v_new.x = v_old.x + (forceIntern[i].x/mass[i]) * dt;
+	v_new.y = v_old.y + ((forceIntern[i].y + gravityForce)/mass[i]) * dt;
+	v_new.z = v_old.z + (forceIntern[i].z/mass[i]) * dt;
 
-	/*if(p_old.y < -0.35){
-		v_new.y *= -1;
-	}*/
+
 	//compute new position with computed velocity
 	p_new.xyz = p_old.xyz + v_new.xyz * dt ;
-	
+
+		if(p_old.y < -0.35){
+		v_new.y = 0;
+		p_new.y = -0.35;
+	}
+	//damping
+	v_new.xyz *= 0.98f;
     //update the arrays with newly computed values
     pos[i].xyz = p_new.xyz;
     vel[i].xyz = v_new.xyz;

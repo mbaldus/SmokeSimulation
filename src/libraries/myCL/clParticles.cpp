@@ -216,7 +216,7 @@ void CLparticles::render()
 	//render Particles from VBOS
 	glEnable(GL_POINT_SPRITE);
 	glEnable(GL_POINT_SMOOTH);
-	glPointSize(100.0);
+	glPointSize(30.0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, p_vbo); //p_vbo is 0
 	//glEnableVertexAttribArray(0);
