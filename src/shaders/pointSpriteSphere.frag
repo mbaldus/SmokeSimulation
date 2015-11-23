@@ -5,7 +5,7 @@ in vec4 passPosition;
 
 //!< uniforms
 uniform bool sphereColor;
-uniform sampler2D tex;
+uniform sampler2D tex1;
 
 //!< out-variables
 out vec4 fragcolor;

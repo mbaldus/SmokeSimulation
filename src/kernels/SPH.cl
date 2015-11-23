@@ -6,29 +6,11 @@ float wPoly6(float pDistance, float h, float poly6const)
 	else return 0;
 }
 
-float wSpikyOld(float pDistance, float h, float spikyConst)
-{
-	//poly6
-	if (0<= pDistance && pDistance <= h)
-		return spikyConst * pow((h - pDistance),3);
-	else return 0;
-}
-
 float wSpiky(float pDistance, float h, float spikyConst)
 {
 	//wSpiky derivative
 	if (0<= pDistance && pDistance <= h)
 		return -3 * spikyConst * pow((h - pDistance),2) ;
-	else return 0;
-}
-
-float wViscOld(float p, float h, float visConst)
-{
-	//poly6
-	if (0<= p && p <= h)
-		return visConst * (-(pow(p,3)/2*pow(h,3))
-						   +(p*p/h*h)
-						   +(h/2*p) - 1);
 	else return 0;
 }
 
@@ -85,10 +67,7 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 	pressure_new = rho * 1; //p = rho * k (k = stoffspezifische Konstante (Wasser 999kg/m³)) 
 
 	//pressure_new = 1 * (pow((rho/1),7) - 1); //p  = k * (pow((rho[i]/rho0),7) - 1); 
-	//if (density[i] > 0)
-	//{
-	//printf("density[%d] %f:, pos[%d] %f,%f,%f \n", i, density[i],i,pos[i].x,pos[i].y,pos[i].z);
-	//}
+
 	pressure[i] = pressure_new;
 	//printf("pressure[%d] = %f:\n", i, pressure[i]);
 }
@@ -99,7 +78,7 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
     unsigned int i = get_global_id(0);
 
 	float4 p = pos[i];
-	float viscosityConst = 0.2f; //mü
+	float viscosityConst = 0.5f; //mü
 
 	float4 f_pressure = 0.0f;
 	float4 f_viscosity = 0.0f;
@@ -114,21 +93,22 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
 	f_pressure.y += mass[j] * ((pressure[i] + pressure[j])/2*density[j]) * wSpiky(p.y - pos[j].y, smoothingLength, spiky);
 	f_pressure.z += mass[j] * ((pressure[i] + pressure[j])/2*density[j]) * wSpiky(p.z - pos[j].z, smoothingLength, spiky);
 
-	f_viscosity.x +=  mass[j] * (distance(vel[j], vel[i])/density[j]) * wVisc(p.x - pos[j].x, smoothingLength, visConst);
-	f_viscosity.y +=  mass[j] * (distance(vel[j], vel[i])/density[j]) * wVisc(p.y - pos[j].y, smoothingLength, visConst);
-	f_viscosity.z +=  mass[j] * (distance(vel[j], vel[i])/density[j]) * wVisc(p.z - pos[j].z, smoothingLength, visConst);
+	f_viscosity.x +=  mass[j] * ((vel[j].x - vel[i].x)/density[j]) * wVisc(p.x - pos[j].x, smoothingLength, visConst);
+	f_viscosity.y +=  mass[j] * ((vel[j].y - vel[i].y)/density[j]) * wVisc(p.y - pos[j].y, smoothingLength, visConst);
+	f_viscosity.z +=  mass[j] * ((vel[j].z - vel[i].z)/density[j]) * wVisc(p.z - pos[j].z, smoothingLength, visConst);
 	}
 
 	//printf("wSpikyDerivative [%d] -> %f:\n",i, wSpiky(distance(p.xyz, pos[neighbour[i*50+1]].xyz), smoothingLength, spiky));
 	//printf("wViscosityDerivative [%d] -> %f:\n",i, wVisc(distance(p.xyz, pos[neighbour[i*50+1]].xyz), smoothingLength, visConst));
 	
-	f_pressure.xyz *= -1.0f;
+	//f_pressure *= -1.0f/density[i];
+	f_pressure *= -1.0f;
 	//printf("fpressure[%d] : x= %f,y= %f,z= %f \n", i, f_pressure.x, f_pressure.y, f_pressure.z);
-	f_viscosity.xyz *= viscosityConst;
+	f_viscosity *= viscosityConst;
 	//printf("fviscosity[%d] : x=%f,y=%f,z=%f \n", i, f_viscosity.x, f_viscosity.y, f_viscosity.z) ;
-	forceIntern[i].xyz = f_pressure.xyz;//  + f_viscosity.xyz;
-
-   // printf("forceIntern[%d] : x=%f,y=%f,z=%f \n", i, forceIntern[i].x, forceIntern[i].y, forceIntern[i].z) ;
+	forceIntern[i] = f_pressure + f_viscosity;
+	//forceIntern[i] = f_viscosity;
+   //printf("forceIntern[%d] : x=%f,y=%f,z=%f \n", i, forceIntern[i].x, forceIntern[i].y, forceIntern[i].z) ;
 }
 
 __kernel void integration(__global float4* pos,  __global float4* vel, __global float* density,__global float* mass, __global float4* forceIntern, float dt)
@@ -152,12 +132,20 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 	//compute new position with computed velocity
 	p_new.xyz = p_old.xyz + v_new.xyz * dt ;
 
-		if(p_old.y < -0.35){
-		v_new.y = 0;
+	if(p_old.y < -0.35)
+	{
+		v_new.y *= -1 ;
 		p_new.y = -0.35;
 	}
+
+	/*if(p_old.x > 0.35){
+		v_new.x *= -1.0f;
+		p_new.x = 0.5;
+	}
+*/
 	//damping
-	v_new.xyz *= 0.98f;
+	v_new.xyz *= 0.99999f;
+
     //update the arrays with newly computed values
     pos[i].xyz = p_new.xyz;
     vel[i].xyz = v_new.xyz;
