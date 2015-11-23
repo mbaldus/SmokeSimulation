@@ -63,10 +63,10 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 		//printf("wPoly6 [%d] -> %f:\n",i, wPoly6(distance(p.xyz, pos[neighbour[i*50+1]].xyz), smoothingLength, poly6));
 
 	density[i] = rho;
-	
-	pressure_new = rho * 1; //p = rho * k (k = stoffspezifische Konstante (Wasser 999kg/m³)) 
+	//printf("density[%d] = %f \n", i , density[i]);
+	//pressure_new = rho * 1; //p = rho * k (k = stoffspezifische Konstante (Wasser 999kg/m³)) 
 
-	//pressure_new = 1 * (pow((rho/1),7) - 1); //p  = k * (pow((rho[i]/rho0),7) - 1); 
+	pressure_new = 1 * (pow((rho/2.8),7) - 1); //p  = k * (pow((rho[i]/rho0),7) - 1); 
 
 	pressure[i] = pressure_new;
 	//printf("pressure[%d] = %f:\n", i, pressure[i]);
@@ -134,7 +134,7 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 
 	if(p_old.y < -0.35)
 	{
-		v_new.y *= -1 ;
+		v_new.y *= -0.9 ;
 		p_new.y = -0.35;
 	}
 
