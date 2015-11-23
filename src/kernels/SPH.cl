@@ -6,6 +6,14 @@ float wPoly6(float pDistance, float h, float poly6const)
 	else return 0;
 }
 
+float wSpikyreal(float pDistance, float h, float spikyConst)
+{
+	//wSpiky derivative
+	if (0<= pDistance && pDistance <= h)
+		return -3 * spikyConst * pow((h - pDistance),2) ;
+	else return 0;
+}
+
 float wSpiky(float pDistance, float h, float spikyConst)
 {
 	//wSpiky derivative
@@ -14,6 +22,14 @@ float wSpiky(float pDistance, float h, float spikyConst)
 	else return 0;
 }
 
+
+float wViscreal(float p, float h, float visConst)
+{
+	//wVisc laplace
+	if (0<= p && p <= h)
+		return visConst * (h-p);
+	else return 0;
+}
 float wVisc(float p, float h, float visConst)
 {
 	//wVisc laplace
@@ -54,7 +70,9 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 
 	float4 p = pos[i];
 	float rho = 0;
+	float rho0 = 0; //Ruhedichte
 	float pressure_new = 0;
+	float k = 10; //Gaskonstante
 	
 	for(int index = 0; index < 50; index++)
 	{
@@ -64,9 +82,7 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 
 	density[i] = rho;
 	//printf("density[%d] = %f \n", i , density[i]);
-	//pressure_new = rho * 1; //p = rho * k (k = stoffspezifische Konstante (Wasser 999kg/m³)) 
-
-	pressure_new = 1 * (pow((rho/2.8),7) - 1); //p  = k * (pow((rho[i]/rho0),7) - 1); 
+	pressure_new = k * (rho - rho0); //p = k * (rho-rho0)(k = stoffspezifische Konstante (Wasser 999kg/m³)) 
 
 	pressure[i] = pressure_new;
 	//printf("pressure[%d] = %f:\n", i, pressure[i]);
@@ -132,17 +148,39 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 	//compute new position with computed velocity
 	p_new.xyz = p_old.xyz + v_new.xyz * dt ;
 
-	if(p_old.y < -0.35)
+	//boundarys
+	if(p_old.y < -0.5)
 	{
-		v_new.y *= -0.9 ;
-		p_new.y = -0.35;
+		v_new.y *= -0.5f;
+		p_new.y = -0.5f;
+	}	
+	
+	if(p_old.y > 0.5)
+	{
+		v_new.y *= -0.999 ;
+		p_new.y = 0.5f;
 	}
 
-	/*if(p_old.x > 0.35){
-		v_new.x *= -1.0f;
-		p_new.x = 0.5;
+	if(p_old.x > 0.5){
+		v_new.x *= -0.5f;
+		p_new.x = 0.5f;
 	}
-*/
+
+	if(p_old.x < -0.5){
+		v_new.x *= -0.5f;
+		p_new.x = -0.5f;
+	}
+
+	if(p_old.z > 0.5){
+		v_new.z *= -0.5f;
+		p_new.z = 0.5f;
+	}
+
+	if(p_old.z < -0.5){
+		v_new.z *= -0.5f;
+		p_new.z = -0.5f;
+	}
+
 	//damping
 	v_new.xyz *= 0.99999f;
 
