@@ -6,14 +6,6 @@ float wPoly6(float pDistance, float h, float poly6const)
 	else return 0;
 }
 
-float wSpikyreal(float pDistance, float h, float spikyConst)
-{
-	//wSpiky derivative
-	if (0<= pDistance && pDistance <= h)
-		return -3 * spikyConst * pow((h - pDistance),2) ;
-	else return 0;
-}
-
 float wSpiky(float pDistance, float h, float spikyConst)
 {
 	//wSpiky derivative
@@ -22,14 +14,6 @@ float wSpiky(float pDistance, float h, float spikyConst)
 	else return 0;
 }
 
-
-float wViscreal(float p, float h, float visConst)
-{
-	//wVisc laplace
-	if (0<= p && p <= h)
-		return visConst * (h-p);
-	else return 0;
-}
 float wVisc(float p, float h, float visConst)
 {
 	//wVisc laplace
