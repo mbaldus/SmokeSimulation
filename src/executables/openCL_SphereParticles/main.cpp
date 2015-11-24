@@ -72,7 +72,7 @@ int main(void) {
 		float z = rand_float(0.5,0.6);
 		float y = -0.5;
 		pos[i] = glm::vec4(x,y,z,1.0f);
-		printf("pos: %f,%f,%f\n", pos[i].x, pos[i].y, pos[i].z);
+		//printf("pos: %f,%f,%f\n", pos[i].x, pos[i].y, pos[i].z);
 		
 		float life_r =rand_float(0.0f,1.0f);
 		float rand_y = rand_float(-1.0,3);
