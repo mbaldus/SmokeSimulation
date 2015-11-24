@@ -1,8 +1,9 @@
 #include <stdio.h>
+#include <algorithm> //std::sort
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 100000
+#define NUM_PARTICLES 10000
 
 #include <myCL/clParticles.h>
 #include <Util/util.h>
@@ -12,6 +13,10 @@
 #include <GL/CVK_Sphere.h>
 #include <GL/Texture.h>
  
+struct sortFunction{
+	bool operator() (const glm::vec4 &vecA, glm::vec4 &vecB) {return (vecA.z<vecB.z);}
+}myFunction;
+
 int main(void) {
 	printf("OpenCL Particles\n");
 	
@@ -19,8 +24,7 @@ int main(void) {
 	glClearColor(0.85, 0.85, 0.85, 0.0);
 	Trackball trackball(GLTools::getWidth(window),GLTools::getHeight(window));
 	Sphere* sphere = new Sphere(0.25);
-	Texture* texture = new Texture(TEXTURES_PATH "/Smoke10.png");
-	Texture* texture2 = new Texture(TEXTURES_PATH "/WhitePuff24.png");
+	Texture* tex = new Texture(TEXTURES_PATH "/Smoke10.png");
 	
 	CLparticles* example = new CLparticles();
 
@@ -65,20 +69,24 @@ int main(void) {
 	for (int i = 0; i <num; i++)
 	{
 		float x = rand_float(-0.1,0.1);
-		float z = rand_float(0.0,0.1);
+		float z = rand_float(0.5,0.6);
 		float y = -0.5;
 		pos[i] = glm::vec4(x,y,z,1.0f);
-		//printf("pos: %f,%f,%f\n", pos[i].x, pos[i].y, pos[i].z);
+		printf("pos: %f,%f,%f\n", pos[i].x, pos[i].y, pos[i].z);
 		
 		float life_r =rand_float(0.0f,1.0f);
 		float rand_y = rand_float(-1.0,3);
 		glm::vec3 initial_vel =  glm::vec3(x,rand_y,z);
 		
 		//printf("life: %f\n", life_r);
-		vel[i] = glm::vec4(initial_vel, life_r);
+		vel[i] = glm::vec4(0,0,0, life_r);
 		
 		//printf("vel: %f,%f,%f\n", vel[i].x, vel[i].y, vel[i].z);
+
+		
 	}
+	//sort depth values of pos for rendering correctly (this must be done in kernel)
+	std::sort(pos.begin(), pos.end(),myFunction);
 
 	example->loadData(pos,vel); 
 	example->genKernel();
@@ -86,6 +94,7 @@ int main(void) {
 	//###################################################################
 	//				GL ShaderProgram and Camera Settings
 
+	//ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/pointSpheres.frag");
 	ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/pointSpriteSphere.frag");
 	
 	glm::mat4 model = glm::mat4(1.0f);
@@ -94,6 +103,7 @@ int main(void) {
 	shaderprogram->update("model",model);
 	shaderprogram->update("view",view);
 	shaderprogram->update("projection",projection);
+	shaderprogram->update("lightDir", glm::vec3(0,0,1));
 	
 	//###################################################################
 
@@ -112,11 +122,13 @@ int main(void) {
 		glEnable(GL_DEPTH_TEST);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		glEnable(GL_ALPHA_TEST);
+		glAlphaFunc(GL_GREATER, 0.001);
+
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 		
-		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_NOTEQUAL, 0);
+	
 		
 		shaderprogram->use();
 		trackball.update(window,view);
