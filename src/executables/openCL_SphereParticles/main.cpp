@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 10000
+#define NUM_PARTICLES 100
 
 #include <myCL/clParticles.h>
 #include <Util/util.h>

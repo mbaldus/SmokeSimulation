@@ -5,7 +5,7 @@ CLsph::CLsph()
 	printf("Initialize OpenCL Object and context \n");
 
 	dt = 0.003f;
-	smoothingLength = 1.4f; //1.4
+	smoothingLength = 2.0f; //1.4
 	poly6 = 315/(64*3.14159265358*pow(smoothingLength,9));
 	spiky = 15/(3.14159265358*pow(smoothingLength,6));
 	visConst = 45/(3.14159265358*pow(smoothingLength,6));
@@ -355,18 +355,30 @@ void CLsph::runKernel(int kernelnumber)
 	//	m_queue.finish();
 	//	}
 
-	//if(kernelnumber == 1)
-	//	{
-	//	float* new_density = new float[m_num];
-	//	m_err = m_queue.enqueueReadBuffer(cl_density, CL_TRUE, 0, sizeof(float)*m_num, new_density, NULL, &m_event);
+	/*if(kernelnumber == 1)
+		{
+		float* new_density = new float[m_num];
+		m_err = m_queue.enqueueReadBuffer(cl_density, CL_TRUE, 0, sizeof(float)*m_num, new_density, NULL, &m_event);
 
-	////	for(int i =0 ; i < 1000; i++)
-	////	{
-	//	printf("new_density[%d] = %g \n", 999, new_density[999]);
-	////	}
-	//	m_queue.finish();
-	//	}
-	//############################################	
+		for(int i =0 ; i < 1000; i++)
+		{
+		printf("new_density[%d] = %g \n", i, new_density[i]);
+		}
+		m_queue.finish();
+		}*/
+
+	if(kernelnumber == 1)
+		{
+		float* new_pressure = new float[m_num];
+		m_err = m_queue.enqueueReadBuffer(cl_pressure, CL_TRUE, 0, sizeof(float)*m_num, new_pressure, NULL, &m_event);
+
+		for(int i =0 ; i < 1000; i++)
+		{
+		printf("new_pressure[%d] = %g \n", i, new_pressure[i]);
+		}
+		m_queue.finish();
+		}
+//	############################################	
 
 
 }

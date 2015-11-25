@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 10000
+#define NUM_PARTICLES 1000
 
 #define NEIGHBOURS 0
 #define DENSITY 1
@@ -29,7 +29,7 @@ int main(void) {
 	
 	CLsph* sph = new CLsph();
     
-	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPH.cl");
+	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPHnon.cl");
     sph->loadProgram(kernel_source);
 
 	//initialize our particle system with positions, velocities and color
@@ -113,7 +113,7 @@ int main(void) {
 		sphereColor=false;
 		shaderprogram->update("sphereColor", sphereColor);
 
-		sph->runKernel(NEIGHBOURS);  //0 == Nachbarschaftssuche
+	//	sph->runKernel(NEIGHBOURS);  //0 == Nachbarschaftssuche
 		sph->runKernel(DENSITY);	 //1 == Dichte und Druckberechnung
 		sph->runKernel(SPH);		 //2 == Sph
 		sph->runKernel(INTEGRATION); //3 == Integration

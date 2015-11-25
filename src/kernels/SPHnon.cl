@@ -68,16 +68,16 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 	//	rho += mass[neighbour[i*1000+index]] * wPoly6(distance(p.xyz, pos[neighbour[i*1000+index]].xyz), smoothingLength, poly6); 
 	//}
 
-	for(int index = 0; index < 1000; index++)
+	for(int index = 0; index < get_global_size(0); index++)
 	{
-		int j = neighbour[i * 1000 + index];
-		rho += mass[j] * pVarPoly(smoothingLength, distance(p.xyz ,pos[j].xyz));
+		//int j = neighbour[i * 1000 + index];
+		rho += mass[index] * pVarPoly(smoothingLength, distance(p.xyz ,pos[index].xyz));
 	}
 	rho *= poly6;
     //printf("distance p-pos[] -> %f:\n", distance(p.xyz, pos[neighbour[i*1000+1]].xyz));
 
 	density[i] = rho;
-	printf("density[%d] = %f \n", i , density[i]);
+	//printf("density[%d] = %f \n", i , density[i]);
 	pressure_new = k * (rho - rho0); //p = k * (rho-rho0)(k = stoffspezifische Konstante (Wasser 999kg/m³)) 
 
 	pressure[i] = pressure_new;
@@ -112,9 +112,9 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
 	//f_viscosity.z +=  mass[j] * ((vel[j].z - vel[i].z)/density[j]) * wVisc(p.z - pos[j].z, smoothingLength, visConst);
 	//}
 
-	for(int index = 0; index < 1000; index++)
+	for(int j = 0; j < get_global_size(0); j++)
 	{
-		int j = neighbour[i * 1000 + index];
+		//int j = neighbour[i * 1000 + index];
 	//fpressure calculation
 	f_pressure += mass[j] * ((pressure[i] + pressure[j])/density[j]) * (p - pos[j])/distance(p, pos[j]) * pow(smoothingLength - distance(p, pos[j]),2);
 
@@ -129,11 +129,11 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
 	//f_pressure *= -1.0f/density[i];
 	f_pressure *= -1.0f * spiky * 1/2;
 	
-	printf("fpressure[%d] : x=%f, y=%f, z=%f \n", i, f_pressure.x, f_pressure.y, f_pressure.z);
+//	printf("fpressure[%d] : x=%f, y=%f, z=%f \n", i, f_pressure.x, f_pressure.y, f_pressure.z);
 	f_viscosity *= viscosityConst * visConst;
 	
 // printf("fviscosity[%d] : x=%f,y=%f,z=%f \n", i, f_viscosity.x, f_viscosity.y, f_viscosity.z) ;
-	//forceIntern[i] = f_pressure;//+ f_viscosity;
+	forceIntern[i] = f_pressure;//+ f_viscosity;
 	
 	//forceIntern[i] = f_viscosity;
   // printf("forceIntern[%d] : x=%f,y=%f,z=%f \n", i, forceIntern[i].x, forceIntern[i].y, forceIntern[i].z) ;
