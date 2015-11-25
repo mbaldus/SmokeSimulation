@@ -367,17 +367,17 @@ void CLsph::runKernel(int kernelnumber)
 		m_queue.finish();
 		}*/
 
-	if(kernelnumber == 1)
-		{
-		float* new_pressure = new float[m_num];
-		m_err = m_queue.enqueueReadBuffer(cl_pressure, CL_TRUE, 0, sizeof(float)*m_num, new_pressure, NULL, &m_event);
+	//if(kernelnumber == 1)
+	//	{
+	//	float* new_pressure = new float[m_num];
+	//	m_err = m_queue.enqueueReadBuffer(cl_pressure, CL_TRUE, 0, sizeof(float)*m_num, new_pressure, NULL, &m_event);
 
-		for(int i =0 ; i < 1000; i++)
-		{
-		printf("new_pressure[%d] = %g \n", i, new_pressure[i]);
-		}
-		m_queue.finish();
-		}
+	//	for(int i =0 ; i < 1000; i++)
+	//	{
+	//	printf("new_pressure[%d] = %g \n", i, new_pressure[i]);
+	//	}
+	//	m_queue.finish();
+	//	}
 //	############################################	
 
 
