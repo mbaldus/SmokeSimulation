@@ -1,14 +1,16 @@
+#define PI 3.14159265359
+
 #include "clSph.h"
 
 CLsph::CLsph()
 {
 	printf("Initialize OpenCL Object and context \n");
 
-	dt = 0.003f;
-	smoothingLength = 2.0f; //1.4
-	poly6 = 315/(64*3.14159265358*pow(smoothingLength,9));
-	spiky = 15/(3.14159265358*pow(smoothingLength,6));
-	visConst = 45/(3.14159265358*pow(smoothingLength,6));
+	dt = 0.016f;
+	smoothingLength = 1.3f; //1.4
+	poly6 = 315/(64*PI*pow(smoothingLength,9));
+	spiky = -45/(PI*pow(smoothingLength,6));
+	visConst = 45/(PI*pow(smoothingLength,6));
 
 	printf("Constants: \n dt = %f \n smoothingLength = %f \n poly6 = %f \n spiky = %f \n visConst = %f \n", 
 		   dt, smoothingLength, poly6, spiky, visConst);
@@ -105,13 +107,14 @@ void CLsph::loadProgram(std::string kernel_source)
 
 }
 
-void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<int> neighbours, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass,std::vector<glm::vec4> forceIntern)
+void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<int> neighbours,std::vector<int> counter, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass,std::vector<glm::vec4> forceIntern)
 {
 	printf("LOAD DATA \n");
 	//store number of particles and the size of bytes of our arrays
 	m_num = pos.size();
 	array_size = m_num * sizeof(glm::vec4);
 	int_size = m_num * sizeof(int) * 50;
+	normal_int_size = m_num * sizeof(int);
 	float_size = m_num * sizeof(float);
 	
 	//create VBO's (util.cpp)
@@ -127,6 +130,7 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	//create OpenCL only arrays
 	cl_velocities = cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
 	cl_neighbours = cl::Buffer(m_context, CL_MEM_READ_WRITE, int_size, NULL, &m_err); 
+	cl_counter = cl::Buffer(m_context, CL_MEM_READ_WRITE, normal_int_size, NULL, &m_err); 
 	cl_density =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_pressure =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_viscosity =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
@@ -139,6 +143,7 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	//data is thightly packed in std::vector starting with the adress of the first element
 	m_err = m_queue.enqueueWriteBuffer(cl_velocities, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_neighbours, CL_TRUE,0, int_size, &neighbours[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_counter, CL_TRUE,0, normal_int_size, &counter[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_density, CL_TRUE,0, float_size, &density[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_pressure, CL_TRUE,0, float_size, &pressure[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_viscosity, CL_TRUE,0, float_size, &viscosity[0], NULL, &m_event);
@@ -168,8 +173,9 @@ void CLsph::genNeighboursKernel()
 	{
 		m_err = m_NeighboursKernel.setArg(0,cl_vbos[0]);
 		m_err = m_NeighboursKernel.setArg(1,cl_neighbours);
-		m_err = m_NeighboursKernel.setArg(2,smoothingLength);
-		m_err = m_NeighboursKernel.setArg(3,cl_mass);
+		m_err = m_NeighboursKernel.setArg(2,cl_counter);
+		m_err = m_NeighboursKernel.setArg(3,smoothingLength);
+		m_err = m_NeighboursKernel.setArg(4,cl_mass);
 	}catch(cl::Error er)
 	{
 		printf("ERROR: %s\n", er.what(), oclErrorString(er.err()));
@@ -201,11 +207,12 @@ void CLsph::genDensityKernel()
 	{
 		m_err = m_DensityKernel.setArg(0,cl_vbos[0]);
 		m_err = m_DensityKernel.setArg(1,cl_neighbours);
-		m_err = m_DensityKernel.setArg(2,cl_density);
-		m_err = m_DensityKernel.setArg(3,cl_pressure);
-		m_err = m_DensityKernel.setArg(4,cl_mass);
-		m_err = m_DensityKernel.setArg(5,smoothingLength);
-		m_err = m_DensityKernel.setArg(6,poly6);
+		m_err = m_DensityKernel.setArg(2,cl_counter);
+		m_err = m_DensityKernel.setArg(3,cl_density);
+		m_err = m_DensityKernel.setArg(4,cl_pressure);
+		m_err = m_DensityKernel.setArg(5,cl_mass);
+		m_err = m_DensityKernel.setArg(6,smoothingLength);
+		m_err = m_DensityKernel.setArg(7,poly6);
 
 	}catch(cl::Error er)
 	{
@@ -239,14 +246,15 @@ void CLsph::genSPHKernel()
 		m_err = m_SphKernel.setArg(0,cl_vbos[0]);
 		m_err = m_SphKernel.setArg(1,cl_velocities);
 		m_err = m_SphKernel.setArg(2,cl_neighbours);
-		m_err = m_SphKernel.setArg(3,cl_density);
-		m_err = m_SphKernel.setArg(4,cl_pressure);
-		m_err = m_SphKernel.setArg(5,cl_viscosity);
-		m_err = m_SphKernel.setArg(6,cl_mass);
-		m_err = m_SphKernel.setArg(7,cl_forceIntern);
-		m_err = m_SphKernel.setArg(8,smoothingLength);
-		m_err = m_SphKernel.setArg(9,spiky);
-		m_err = m_SphKernel.setArg(10,visConst);
+		m_err = m_SphKernel.setArg(3,cl_counter);
+		m_err = m_SphKernel.setArg(4,cl_density);
+		m_err = m_SphKernel.setArg(5,cl_pressure);
+		m_err = m_SphKernel.setArg(6,cl_viscosity);
+		m_err = m_SphKernel.setArg(7,cl_mass);
+		m_err = m_SphKernel.setArg(8,cl_forceIntern);
+		m_err = m_SphKernel.setArg(9,smoothingLength);
+		m_err = m_SphKernel.setArg(10,spiky);
+		m_err = m_SphKernel.setArg(11,visConst);
 
 	}catch(cl::Error er)
 	{
@@ -340,22 +348,22 @@ void CLsph::runKernel(int kernelnumber)
 	m_err = m_queue.enqueueReleaseGLObjects(&cl_vbos, NULL, &m_event);
 	m_queue.finish();
 
-	//########################################
-	//following code is for debugging purposes
-	//
-	//	if(kernelnumber == 0)
-	//	{
-	//	int* new_neighbours = new int[m_num*50];
-	//	m_err = m_queue.enqueueReadBuffer(cl_neighbours, CL_TRUE, 0, sizeof(int)*m_num*50, new_neighbours, NULL, &m_event);
+		//########################################
+		//following code is for debugging purposes
+		//
+		//	if(kernelnumber == 0)
+		//	{
+		//	int* new_neighbours = new int[m_num*50];
+		//	m_err = m_queue.enqueueReadBuffer(cl_neighbours, CL_TRUE, 0, sizeof(int)*m_num*50, new_neighbours, NULL, &m_event);
 
-	//	for(int i =0 ; i < 1000; i++)
-	//	{
-	//	printf("neighbours[%d] = %g \n", i, new_neighbours[i]);
-	//	}
-	//	m_queue.finish();
-	//	}
+		//	for(int i =0 ; i < 1000; i++)
+		//	{
+		//	printf("neighbours[%d] = %g \n", i, new_neighbours[i]);
+		//	}
+		//	m_queue.finish();
+		//	}
 
-	/*if(kernelnumber == 1)
+		/*if(kernelnumber == 1)
 		{
 		float* new_density = new float[m_num];
 		m_err = m_queue.enqueueReadBuffer(cl_density, CL_TRUE, 0, sizeof(float)*m_num, new_density, NULL, &m_event);
@@ -367,18 +375,18 @@ void CLsph::runKernel(int kernelnumber)
 		m_queue.finish();
 		}*/
 
-	//if(kernelnumber == 1)
-	//	{
-	//	float* new_pressure = new float[m_num];
-	//	m_err = m_queue.enqueueReadBuffer(cl_pressure, CL_TRUE, 0, sizeof(float)*m_num, new_pressure, NULL, &m_event);
+		//if(kernelnumber == 1)
+		//	{
+		//	float* new_pressure = new float[m_num];
+		//	m_err = m_queue.enqueueReadBuffer(cl_pressure, CL_TRUE, 0, sizeof(float)*m_num, new_pressure, NULL, &m_event);
 
-	//	for(int i =0 ; i < 1000; i++)
-	//	{
-	//	printf("new_pressure[%d] = %g \n", i, new_pressure[i]);
-	//	}
-	//	m_queue.finish();
-	//	}
-//	############################################	
+		//	for(int i =0 ; i < 1000; i++)
+		//	{
+		//	printf("new_pressure[%d] = %g \n", i, new_pressure[i]);
+		//	}
+		//	m_queue.finish();
+		//	}
+		//	############################################	
 
 
 }

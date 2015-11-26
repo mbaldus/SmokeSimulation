@@ -26,6 +26,7 @@ class CLsph
 
 		std::vector<cl::Memory> cl_vbos; //0: position VBO, 1: color VBO
 		cl::Buffer cl_neighbours;   //Neighbours
+		cl::Buffer cl_counter; 
 		cl::Buffer cl_velocities;	//particle velocity
 		
 		//SPH parameters and Buffers
@@ -47,6 +48,7 @@ class CLsph
 		size_t array_size; //the size of our arrays num * sizeof(Vec4)
 		size_t int_size; //size of particles amount * count of saved neighbours per particle
 		size_t float_size;
+		size_t	normal_int_size; //(m_num)
 
 		//default constructor initializes OpenCL Context and chooses platform and device
 		CLsph();
@@ -63,6 +65,7 @@ class CLsph
 		void loadData(std::vector<glm::vec4> pos, 
 					  std::vector<glm::vec4> vel,
 					  std::vector<int> neighbours,
+					  std::vector<int> counter,
 					  std::vector<float> density, 
 					  std::vector<float> pressure, 
 					  std::vector<float> viscosity,

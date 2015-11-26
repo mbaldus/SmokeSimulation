@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 1000
+#define NUM_PARTICLES 5000
 
 #define NEIGHBOURS 0
 #define DENSITY 1
@@ -29,7 +29,7 @@ int main(void) {
 	
 	CLsph* sph = new CLsph();
     
-	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPHnon.cl");
+	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPH.cl");
     sph->loadProgram(kernel_source);
 
 	//initialize our particle system with positions, velocities and color
@@ -37,6 +37,7 @@ int main(void) {
 	std::vector<glm::vec4> pos(num);
 	std::vector<glm::vec4> vel(num);
 	std::vector<int> neighbours(num*50);
+	std::vector<int> counter(num); //not num (count of neighbours)
 	std::vector<float> density(num);
 	std::vector<float> pressure(num);
 	std::vector<float> viscosity(num);
@@ -65,11 +66,12 @@ int main(void) {
 		density[i] = 0.0f;
 		pressure[i] = 1.0f;
 		viscosity[i] = 1.0f;
-		mass[i] = 0.01f;
+		mass[i] = 0.05f;
 		forceIntern[i] = glm::vec4(0,0,0,0);
+		counter[i]=0;
 	}
 	
-	sph->loadData(pos,vel,neighbours,density,pressure,viscosity,mass,forceIntern); 
+	sph->loadData(pos,vel,neighbours,counter,density,pressure,viscosity,mass,forceIntern); 
 	sph->genNeighboursKernel();
 	sph->genDensityKernel();
 	sph->genIntegrationKernel();
@@ -113,7 +115,7 @@ int main(void) {
 		sphereColor=false;
 		shaderprogram->update("sphereColor", sphereColor);
 
-	//	sph->runKernel(NEIGHBOURS);  //0 == Nachbarschaftssuche
+		sph->runKernel(NEIGHBOURS);  //0 == Nachbarschaftssuche
 		sph->runKernel(DENSITY);	 //1 == Dichte und Druckberechnung
 		sph->runKernel(SPH);		 //2 == Sph
 		sph->runKernel(INTEGRATION); //3 == Integration
