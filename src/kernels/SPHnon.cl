@@ -55,7 +55,7 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 	float rho = 0;
 	float rho0 = 0; //Ruhedichte
 	float pressure_new = 0;
-	float k = 0.0025; //Gaskonstante
+	float k = 1; //Gaskonstante
 	//float k = 2; //sick :D
 	//for(int index = 0; index < 1000; index++)
 	//{
@@ -71,7 +71,7 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 		}
 	}
 	rho *= poly6;
-    //printf("distance p-pos[] -> %f:\n", distance(p, pos[10]));
+    //printf("rho = mass[10] *  pVarPoly = %f\n",  mass[10] * pVarPoly(smoothingLength, distance(p.xyz ,pos[10].xyz)));
 
 	density[i] = rho;
 	/*if(density[i] == 0)
@@ -80,7 +80,7 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 	pressure_new = k * (rho - rho0); //p = k * (rho-rho0)(k = stoffspezifische Konstante (Wasser 999kg/m³)) 
 
 	pressure[i] = pressure_new;
-	printf("pressure[%d] = %f:\n", i, pressure[i]);
+	//printf("pressure[%d] = %f:\n", i, pressure[i]);
 	
 	//float f_buoyancy = b * (density[i] - rho0) * gravity ;
 }
@@ -92,7 +92,7 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
 
 	float4 p = pos[i];
 	//float viscosityConst = 0.75f; //je größer desto mehr zusammenhalt
-	float viscosityConst = 0.5f; //je größer desto mehr zusammenhalt
+	float viscosityConst = 1.0f; //je größer desto mehr zusammenhalt
 	
 	float4 f_pressure = 0.0f;
 	float4 f_viscosity = 0.0f;
@@ -140,11 +140,11 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
 	f_viscosity *=  viscosityConst * visConst;
 	
 	//printf("fviscosity[%d] : x=%f,y=%f,z=%f \n", i, f_viscosity.x, f_viscosity.y, f_viscosity.z) ;
-	forceIntern[i] = f_pressure +  f_viscosity;
+	//forceIntern[i] = f_pressure +  f_viscosity;
 	
 	
-	//forceIntern[i] = f_viscosity;
-   //printf("forceIntern[%d] : x=%f,y=%f,z=%f \n", i, forceIntern[i].x, forceIntern[i].y, forceIntern[i].z) ;
+	forceIntern[i] = f_viscosity;
+   printf("forceIntern[%d] : x=%f,y=%f,z=%f \n", i, forceIntern[i].x, forceIntern[i].y, forceIntern[i].z) ;
 }
 
 __kernel void integration(__global float4* pos,  __global float4* vel, __global float* density,__global float* mass, __global float4* forceIntern, float dt)

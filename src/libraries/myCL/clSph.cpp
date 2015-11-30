@@ -6,8 +6,8 @@ CLsph::CLsph()
 {
 	printf("Initialize OpenCL Object and context \n");
 
-	dt = 0.016f;
-	smoothingLength = 1.3f; //1.4
+	dt = 0.0075f; //0.015
+	smoothingLength = 0.1f; //1.4
 	poly6 = 315/(64*PI*pow(smoothingLength,9));
 	spiky = -45/(PI*pow(smoothingLength,6));
 	visConst = 45/(PI*pow(smoothingLength,6));
