@@ -6,8 +6,9 @@ CLsph::CLsph()
 {
 	printf("Initialize OpenCL Object and context \n");
 
-	dt = 0.0075f; //0.015
-	smoothingLength = 0.1f; //1.4
+	dt = 0.00075f; //0.015
+	smoothingLength = 0.065f; //1.4
+	rho0 = 0.59;
 	poly6 = 315/(64*PI*pow(smoothingLength,9));
 	spiky = -45/(PI*pow(smoothingLength,6));
 	visConst = 45/(PI*pow(smoothingLength,6));
@@ -213,6 +214,7 @@ void CLsph::genDensityKernel()
 		m_err = m_DensityKernel.setArg(5,cl_mass);
 		m_err = m_DensityKernel.setArg(6,smoothingLength);
 		m_err = m_DensityKernel.setArg(7,poly6);
+		m_err = m_DensityKernel.setArg(8,rho0);
 
 	}catch(cl::Error er)
 	{
@@ -290,7 +292,9 @@ void CLsph::genIntegrationKernel()
 		m_err = m_IntegrationKernel.setArg(2,cl_density);
 		m_err = m_IntegrationKernel.setArg(3,cl_mass);
 		m_err = m_IntegrationKernel.setArg(4,cl_forceIntern);
-		m_err = m_IntegrationKernel.setArg(5,dt);
+		m_err = m_IntegrationKernel.setArg(5,rho0);
+		m_err = m_IntegrationKernel.setArg(6,dt);
+
 
 	}catch(cl::Error er)
 	{
@@ -393,12 +397,10 @@ void CLsph::runKernel(int kernelnumber)
 
 void CLsph::render()
 {
-	
 	//render Particles from VBOS
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//	glEnable(GL_POINT_SPRITE);
 	glEnable(GL_POINT_SMOOTH);
-	glPointSize(5.0);
+	glPointSize(7.5);
 
 	glBindBuffer(GL_ARRAY_BUFFER, p_vbo); //p_vbo is 0
 	//glEnableVertexAttribArray(0);

@@ -54,7 +54,7 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 	float4 p = pos[i];
 	float rho = 0;
 	float pressure_new = 0;
-	float k = 0.75; //Gaskonstante
+	float k = 0.05; //Gaskonstante
 
 	for(int index = 0; index < counter[i]; index++)
 	{
@@ -71,9 +71,8 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 	pressure_new = k * (rho - rho0); //p = k * (rho-rho0)(k = stoffspezifische Konstante (Wasser 999kg/m³)) 
 
 	pressure[i] = pressure_new;
-	//printf("pressure[%d] = %f:\n", i, pressure[i]);
+//	printf("pressure[%d] = %f:\n", i, pressure[i]);
 	
-	//float f_buoyancy = b * (density[i] - rho0) * gravity ;
 }
 
 __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neighbour,__global int* counter, __global float* density, __global float* pressure, 
@@ -82,28 +81,12 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
     unsigned int i = get_global_id(0);
 
 	float4 p = pos[i];
-	float viscosityConst = 20.0f; //je größer desto mehr zusammenhalt
+	float viscosityConst = 0.5; //je größer desto mehr zusammenhalt
 	
 	float4 f_pressure = 0.0f;
 	float4 f_viscosity = 0.0f;
 
-	//printf("velodistance[%d] = %f \n", i, distance(vel[neighbour[i*1000]], vel[i]));
 	//force calculation
-
-
-	//for(int index = 0; index < 1000; index++)
-	//{
-	//	int j = neighbour[i * 1000 + index];
-	////fpressure calculation
-	//f_pressure.x += mass[j] * ((pressure[i] + pressure[j])/2*density[j]) * wSpiky(p.x - pos[j].x, smoothingLength, spiky);
-	//f_pressure.y += mass[j] * ((pressure[i] + pressure[j])/2*density[j]) * wSpiky(p.y - pos[j].y, smoothingLength, spiky);
-	//f_pressure.z += mass[j] * ((pressure[i] + pressure[j])/2*density[j]) * wSpiky(p.z - pos[j].z, smoothingLength, spiky);
-
-	//f_viscosity.x +=  mass[j] * ((vel[j].x - vel[i].x)/density[j]) * wVisc(p.x - pos[j].x, smoothingLength, visConst);
-	//f_viscosity.y +=  mass[j] * ((vel[j].y - vel[i].y)/density[j]) * wVisc(p.y - pos[j].y, smoothingLength, visConst);
-	//f_viscosity.z +=  mass[j] * ((vel[j].z - vel[i].z)/density[j]) * wVisc(p.z - pos[j].z, smoothingLength, visConst);
-	//}
-
 	for(int index = 0; index < counter[i]; index++)
 	{
 		int j = neighbour[i * 50 + index];
@@ -124,7 +107,7 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
 
 	f_viscosity *=  viscosityConst * visConst * mass[i];
 	
-	//printf("fviscosity[%d] : x=%f,y=%f,z=%f \n", i, f_viscosity.x, f_viscosity.y, f_viscosity.z) ;
+//	printf("fviscosity[%d] : x=%f,y=%f,z=%f \n", i, f_viscosity.x, f_viscosity.y, f_viscosity.z) ;
 	forceIntern[i] = f_pressure +  f_viscosity;
 	forceIntern[i] /= density[i];
 	
@@ -141,19 +124,16 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 	float4 p_new = p_old;
 	float4 v_new = v_old;
 
-
-	float gravityForce = -9.81f * mass[i];
+	float b = 5;
+	float f_buoyancy = b * (density[i] - rho0) * -9.81f * mass[i];
+	//float gravityForce = -9.81f * mass[i];
 	
+	//printf("f_buoyancy = %f \n", f_buoyancy);
 
 	//apply intern forces and extern forces
 	v_new.x = v_old.x + (forceIntern[i].x/mass[i]) * dt;
-	v_new.y = v_old.y + ((forceIntern[i].y + gravityForce)/mass[i]) * dt;
+	v_new.y = v_old.y + ((forceIntern[i].y + f_buoyancy)/mass[i]) * dt;
 	v_new.z = v_old.z + (forceIntern[i].z/mass[i]) * dt;
-
-	/*v_new.x = v_old.x + (forceIntern[i].x/density[i]) * dt;
-	v_new.y = v_old.y + ((forceIntern[i].y + gravityForce)/density[i]) * dt;
-	v_new.z = v_old.z + (forceIntern[i].z/density[i]) * dt;
-    */
 
 	//compute new position with computed velocity
 	p_new.xyz = p_old.xyz + v_new.xyz * dt ;
@@ -166,13 +146,13 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 		p_new.y = -0.5f;
 	}	
 	
-	if(p_old.y > 0.5)
+	/*if(p_old.y > 0.5)
 	{
 		v_new.y *= bDamp ;
 		p_new.y = 0.5f;
-	}
+	}*/
 
-	if(p_old.x > 0.5){
+	/*if(p_old.x > 0.5){
 		v_new.x *= bDamp;
 		p_new.x = 0.5f;
 	}
@@ -190,7 +170,7 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 	if(p_old.z < -0.5){
 		v_new.z *= bDamp;
 		p_new.z = -0.5f;
-	}
+	}*/
 
 	//damping
 	v_new.xyz *= 0.99999f;

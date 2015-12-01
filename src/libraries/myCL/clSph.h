@@ -41,6 +41,7 @@ class CLsph
 		float spiky;
 		float visConst;
 		float smoothingLength;
+		float rho0;
 		
 		int p_vbo; //position VBO
 		int c_vbo; //color VBO

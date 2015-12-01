@@ -29,7 +29,7 @@ int main(void) {
 	
 	CLsph* sph = new CLsph();
     
-	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPH.cl");
+	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPHgas.cl");
     sph->loadProgram(kernel_source);
 
 	//initialize our particle system with positions, velocities and color
@@ -71,7 +71,7 @@ int main(void) {
 		density[i] = 0.0f;
 		pressure[i] = 1.0f;
 		viscosity[i] = 1.0f;
-		mass[i] = 0.24f;
+		mass[i] = 0.00005f;
 		forceIntern[i] = glm::vec4(0,0,0,0);
 		counter[i]=0;
 	}
@@ -85,41 +85,35 @@ int main(void) {
 	//###################################################################
 	//				GL ShaderProgram and Camera Settings
 
-	ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/sphereFS.frag");
-	
+	ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/simpleFS.frag");
+	//ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/pointSpheres.frag");
+
 	glm::mat4 model = glm::mat4(1.0f);
 	glm::mat4 view = glm::lookAt(glm::vec3(0.0f,-0.1f,1.0f),glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,1.0f,0.0f));
 	glm::mat4 projection = glm::perspective(45.f, GLTools::getRatio(window), 0.1f, 100.f);
 	shaderprogram->update("model",model);
 	shaderprogram->update("view",view);
 	shaderprogram->update("projection",projection);
+	shaderprogram->update("lightDir", glm::vec3(0,0,1)); // for pointSpheres.frag
 	//###################################################################
-
-	bool sphereColor = true;
-	
 
 	std::function<void(double)> loop = 
 		[&sph,
 		&shaderprogram,
 		&trackball, &sphere,
 		&view, 
-		&sphereColor, &neighbours,
+		&neighbours,
 		&window](double deltatime)
 	{
 		glEnable(GL_DEPTH_TEST);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	
 		shaderprogram->use();
 		trackball.update(window,view);
 		shaderprogram->update("view", view);
 		
-		//render sphere in grey
-		sphereColor=true;
-		shaderprogram->update("sphereColor", sphereColor);
-	//	sphere->render();	
-		sphereColor=false;
-		shaderprogram->update("sphereColor", sphereColor);
-
 		sph->runKernel(NEIGHBOURS);  //0 == Nachbarschaftssuche
 		sph->runKernel(DENSITY);	 //1 == Dichte und Druckberechnung
 		sph->runKernel(SPH);		 //2 == Sph
