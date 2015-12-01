@@ -29,7 +29,7 @@ int main(void) {
 	
 	CLsph* sph = new CLsph();
     
-	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPHgas.cl");
+	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPH.cl");
     sph->loadProgram(kernel_source);
 
 	//initialize our particle system with positions, velocities and color
@@ -51,8 +51,8 @@ int main(void) {
 		float z = rand_float(-0.25,0.25);
 		float y = rand_float(-0.25,0.25);*/
 
-		float x = rand_float(-0.49,0.0);
-		float z = rand_float(-0.49,0.0);
+		float x = rand_float(-0.49,-0.25);
+		float z = rand_float(-0.49,0);
 		float y = rand_float(-0.49,0.0);
 
 		pos[i] = glm::vec4(x,y,z,1.0f);
@@ -71,7 +71,7 @@ int main(void) {
 		density[i] = 0.0f;
 		pressure[i] = 1.0f;
 		viscosity[i] = 1.0f;
-		mass[i] = 0.00005f;
+		mass[i] = 0.25f;
 		forceIntern[i] = glm::vec4(0,0,0,0);
 		counter[i]=0;
 	}

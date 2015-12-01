@@ -82,7 +82,7 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
     unsigned int i = get_global_id(0);
 
 	float4 p = pos[i];
-	float viscosityConst = 20.0f; //je größer desto mehr zusammenhalt
+	float viscosityConst = 5.0f; //je größer desto mehr zusammenhalt
 	
 	float4 f_pressure = 0.0f;
 	float4 f_viscosity = 0.0f;
@@ -172,9 +172,9 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 		p_new.y = 0.5f;
 	}
 
-	if(p_old.x > 0.5){
+	if(p_old.x > 1){
 		v_new.x *= bDamp;
-		p_new.x = 0.5f;
+		p_new.x = 1;
 	}
 
 	if(p_old.x < -0.5){
