@@ -71,7 +71,7 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 	pressure_new = k * (rho - rho0); //p = k * (rho-rho0)(k = stoffspezifische Konstante (Wasser 999kg/m³)) 
 
 	pressure[i] = pressure_new;
-	//printf("pressure[%d] = %f:\n", i, pressure[i]);
+	printf("pressure[%d] = %f:\n", i, pressure[i]);
 	
 	//float f_buoyancy = b * (density[i] - rho0) * gravity ;
 }
@@ -82,7 +82,7 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
     unsigned int i = get_global_id(0);
 
 	float4 p = pos[i];
-	float viscosityConst = 5.0f; //je größer desto mehr zusammenhalt
+	float viscosityConst = 5; //je größer desto mehr zusammenhalt
 	
 	float4 f_pressure = 0.0f;
 	float4 f_viscosity = 0.0f;
