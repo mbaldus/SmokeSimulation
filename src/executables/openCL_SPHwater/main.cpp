@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 600
+#define NUM_PARTICLES 5000
 
 #define NEIGHBOURS 0
 #define DENSITY 1
@@ -10,7 +10,7 @@
 #define INTEGRATION 3
 
 
-#include <myCL/clSphGas.h>
+#include <myCL/clSphOld.h>
 #include <Util/util.h>
 #include <GL/GLTools.h>
 #include <GL/CVK_Trackball.h>
@@ -27,9 +27,9 @@ int main(void) {
 	Trackball trackball(GLTools::getWidth(window),GLTools::getHeight(window));
 	Sphere* sphere = new Sphere(0.25);
 	
-	CLsphGas* sph = new CLsphGas();
+	CLsphOld* sph = new CLsphOld();
     
-	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPHgas.cl");
+	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPHwater.cl");
     sph->loadProgram(kernel_source);
 
 	//initialize our particle system with positions, velocities and color
@@ -71,8 +71,7 @@ int main(void) {
 		density[i] = 0.0f;
 		pressure[i] = 1.0f;
 		viscosity[i] = 1.0f;
-		mass[i] = 0.00005f;
-		/*mass[i] = 0.25f;*/
+		mass[i] = 0.25f;
 		forceIntern[i] = glm::vec4(0,0,0,0);
 		counter[i]=0;
 	}

@@ -411,7 +411,7 @@ void CLsph::render()
 	//render Particles from VBOS
 	glEnable(GL_POINT_SPRITE);
 	glEnable(GL_POINT_SMOOTH);
-	glPointSize(12.5);
+	glPointSize(20);
 
 	glBindBuffer(GL_ARRAY_BUFFER, p_vbo); //p_vbo is 0
 	//glEnableVertexAttribArray(0);

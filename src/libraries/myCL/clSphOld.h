@@ -20,7 +20,7 @@
 
 #include <glm/glm.hpp>
 
-class CLsphGas
+class CLsphOld
 {
 	public:
 
@@ -52,9 +52,9 @@ class CLsphGas
 		size_t	normal_int_size; //(m_num)
 
 		//default constructor initializes OpenCL Context and chooses platform and device
-		CLsphGas();
+		CLsphOld();
 		//default deconstructor releases OpenCL objects and frees device memory
-		~CLsphGas();
+		~CLsphOld();
 
 		//load OpenCL program from a file
 		//pass in the kernel source code as a string. 

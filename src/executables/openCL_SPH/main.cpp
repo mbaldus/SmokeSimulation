@@ -29,6 +29,7 @@ int main(void) {
 	Sphere* sphere = new Sphere(0.25);
 	Texture* tex = new Texture(TEXTURES_PATH "/Smoke10.png");
 	
+	//actual best result: mass = 0.000025f
 	CLsph* sph = new CLsph(0.00375f,0.05f,0.59);
     
 	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPH.cl");
@@ -110,7 +111,7 @@ int main(void) {
 		glAlphaFunc(GL_GREATER, 0.05);
 
 		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 		
 	
 		shaderprogram->use();
