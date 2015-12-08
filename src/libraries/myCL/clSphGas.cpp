@@ -1,8 +1,8 @@
 #define PI 3.14159265359
 
-#include "clSph.h"
+#include "clSphGas.h"
 
-CLsph::CLsph()
+CLsphGas::CLsphGas()
 {
 	printf("Initialize OpenCL Object and context \n");
 
@@ -74,11 +74,11 @@ CLsph::CLsph()
 	printf("OpenCL has been initialized \n###################################################### \n");
 }
 
-CLsph::~CLsph()
+CLsphGas::~CLsphGas()
 {
 }
 
-void CLsph::loadProgram(std::string kernel_source)
+void CLsphGas::loadProgram(std::string kernel_source)
 {
 	//Program Setup
 	int program_length;
@@ -115,7 +115,7 @@ void CLsph::loadProgram(std::string kernel_source)
 
 }
 
-void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<int> neighbours,std::vector<int> counter, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass,std::vector<glm::vec4> forceIntern)
+void CLsphGas::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<int> neighbours,std::vector<int> counter, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass,std::vector<glm::vec4> forceIntern)
 {
 	printf("LOAD DATA \n");
 	//store number of particles and the size of bytes of our arrays
@@ -161,7 +161,7 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	printf("######################################################\n");
 }
 
-void CLsph::genNeighboursKernel()
+void CLsphGas::genNeighboursKernel()
 {
 	printf("genNeighboursKernel\n");
 	
@@ -195,7 +195,7 @@ void CLsph::genNeighboursKernel()
 	printf("######################################################\n");
 }
 
-void CLsph::genDensityKernel()
+void CLsphGas::genDensityKernel()
 {
 	printf("genDensityKernel\n");
 	
@@ -234,7 +234,7 @@ void CLsph::genDensityKernel()
 	printf("######################################################\n");
 }
 
-void CLsph::genSPHKernel()
+void CLsphGas::genSPHKernel()
 {
 	printf("genSPHKernel\n");
 	
@@ -276,7 +276,7 @@ void CLsph::genSPHKernel()
 	printf("######################################################\n");
 }
 
-void CLsph::genIntegrationKernel()
+void CLsphGas::genIntegrationKernel()
 {
 	printf("genIntegrationKernel\n");
 	
@@ -314,7 +314,7 @@ void CLsph::genIntegrationKernel()
 	printf("######################################################\n");
 }
 
-void CLsph::runKernel(int kernelnumber)
+void CLsphGas::runKernel(int kernelnumber)
 {
 
 	//update the system by calculating new velocities and updating positions of particles
@@ -402,7 +402,7 @@ void CLsph::runKernel(int kernelnumber)
 
 }
 
-void CLsph::render()
+void CLsphGas::render()
 {
 	//render Particles from VBOS
 //	glEnable(GL_POINT_SPRITE);

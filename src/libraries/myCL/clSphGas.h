@@ -1,5 +1,5 @@
-#ifndef CLSPH_H
-#define CLSPH_H
+#ifndef CLSPHGAS_H
+#define CLSPHGAS_H
 
 #define __CL_ENABLE_EXCEPTIONS
 
@@ -20,7 +20,7 @@
 
 #include <glm/glm.hpp>
 
-class CLsph
+class CLsphGas
 {
 	public:
 
@@ -52,9 +52,9 @@ class CLsph
 		size_t	normal_int_size; //(m_num)
 
 		//default constructor initializes OpenCL Context and chooses platform and device
-		CLsph();
+		CLsphGas();
 		//default deconstructor releases OpenCL objects and frees device memory
-		~CLsph();
+		~CLsphGas();
 
 		//load OpenCL program from a file
 		//pass in the kernel source code as a string. 
@@ -105,4 +105,4 @@ class CLsph
 		cl::Event m_event;
 };
 
-#endif //CLSPH_H
+#endif //CLSPHGAS_H

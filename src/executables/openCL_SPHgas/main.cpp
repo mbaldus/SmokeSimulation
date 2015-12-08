@@ -10,7 +10,7 @@
 #define INTEGRATION 3
 
 
-#include <myCL/clSph.h>
+#include <myCL/clSphGas.h>
 #include <Util/util.h>
 #include <GL/GLTools.h>
 #include <GL/CVK_Trackball.h>
@@ -27,7 +27,7 @@ int main(void) {
 	Trackball trackball(GLTools::getWidth(window),GLTools::getHeight(window));
 	Sphere* sphere = new Sphere(0.25);
 	
-	CLsph* sph = new CLsph();
+	CLsphGas* sph = new CLsphGas();
     
 	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPHgas.cl");
     sph->loadProgram(kernel_source);
