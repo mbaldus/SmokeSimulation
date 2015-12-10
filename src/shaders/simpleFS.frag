@@ -11,6 +11,6 @@ out vec4 fragcolor;
 
 void main()
 {
-		fragcolor = vec4(1,0,0,1);
+		fragcolor = vec4(1,1,1,1-passPosition.y+1);
 		//fragcolor = vec4(passPosition.x,passPosition.y,passPosition.z,1-passPosition.y);
 }

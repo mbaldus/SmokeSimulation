@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 10000
+#define NUM_PARTICLES 5000
 
 #define NEIGHBOURS 0
 #define DENSITY 1
@@ -10,13 +10,12 @@
 #define INTEGRATION 3
 
 
-#include <myCL/clSph.h>
+#include <myCL/clSphOld.h>
 #include <Util/util.h>
 #include <GL/GLTools.h>
 #include <GL/CVK_Trackball.h>
 #include <GL/ShaderProgram.h>
 #include <GL/CVK_Sphere.h>
-#include <GL/Texture.h>
  
 
 
@@ -27,19 +26,16 @@ int main(void) {
 
 	Trackball trackball(GLTools::getWidth(window),GLTools::getHeight(window));
 	Sphere* sphere = new Sphere(0.25);
-	Texture* tex = new Texture(TEXTURES_PATH "/smoke10.png");
 	
-	//actual best result: mass = 0.000025f
-	CLsph* sph = new CLsph(0.00375f,0.05f,0.59);
+	CLsphOld* sph = new CLsphOld();
     
-	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPH.cl");
+	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPHwater.cl");
     sph->loadProgram(kernel_source);
 
 	//initialize our particle system with positions, velocities and color
 	int num = NUM_PARTICLES;
 	std::vector<glm::vec4> pos(num);
 	std::vector<glm::vec4> vel(num);
-	std::vector<float> life(num);
 	std::vector<int> neighbours(num*50);
 	std::vector<int> counter(num); //not num (count of neighbours)
 	std::vector<float> density(num);
@@ -51,29 +47,36 @@ int main(void) {
 	//spawn on plane
 	for (int i = 0; i <num; i++)
 	{
-		float x = rand_float(-0.75,-0.5);
-		float z = rand_float(-0.125,0.125);
-		float y = rand_float(-.5,0);
+		/*float x = rand_float(-0.25,0.25);
+		float z = rand_float(-0.25,0.25);
+		float y = rand_float(-0.25,0.25);*/
+
+		float x = rand_float(-0.49,-0.25);
+		float z = rand_float(0,0.25);
+		float y = rand_float(-0.49,-0.25);
 
 		pos[i] = glm::vec4(x,y,z,1.0f);
+		//printf("pos: %f,%f,%f\n", pos[i].x, pos[i].y, pos[i].z);
 		
-		float life_r =rand_float(0.0f,0.5f);
-		float rand_vel = rand_float(0.3,1);
+		//float life_r =rand_float(0.0f,1.0f);
+		//float rand_y = rand_float(-1.0,3);
 		//glm::vec3 initial_vel =  glm::vec3(x,rand_y,z);
 		
-		vel[i] = glm::vec4(rand_vel,rand_vel,0,0);
-		life[i] = life_r;
+		//printf("life: %f\n", life_r);
+		//vel[i] = glm::vec4(initial_vel, life_r);
+		
+		vel[i] = glm::vec4(0.4,0,0,0);
 		
 		//printf("vel: %f,%f,%f\n", vel[i].x, vel[i].y, vel[i].z);
 		density[i] = 0.0f;
 		pressure[i] = 1.0f;
 		viscosity[i] = 1.0f;
-		mass[i] = 0.000025f;
+		mass[i] = 0.25f;
 		forceIntern[i] = glm::vec4(0,0,0,0);
 		counter[i]=0;
 	}
 	
-	sph->loadData(pos,vel,life,neighbours,counter,density,pressure,viscosity,mass,forceIntern); 
+	sph->loadData(pos,vel,neighbours,counter,density,pressure,viscosity,mass,forceIntern); 
 	sph->genNeighboursKernel();
 	sph->genDensityKernel();
 	sph->genIntegrationKernel();
@@ -82,9 +85,8 @@ int main(void) {
 	//###################################################################
 	//				GL ShaderProgram and Camera Settings
 
-//	ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/simpleFS.frag");
+	ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/simpleFS.frag");
 	//ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/pointSpheres.frag");
-	ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/pointSpriteSphere.frag");
 
 	glm::mat4 model = glm::mat4(1.0f);
 	glm::mat4 view = glm::lookAt(glm::vec3(0.0f,-0.1f,1.0f),glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,1.0f,0.0f));
@@ -94,7 +96,6 @@ int main(void) {
 	shaderprogram->update("projection",projection);
 	shaderprogram->update("lightDir", glm::vec3(0,0,1)); // for pointSpheres.frag
 	//###################################################################
-
 
 	std::function<void(double)> loop = 
 		[&sph,
@@ -106,14 +107,8 @@ int main(void) {
 	{
 		glEnable(GL_DEPTH_TEST);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		/*glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.05);
-*/
 		glEnable(GL_BLEND);
-		glDepthMask(GL_FALSE);
-		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-		
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	
 		shaderprogram->use();
 		trackball.update(window,view);
@@ -125,9 +120,6 @@ int main(void) {
 		sph->runKernel(INTEGRATION); //3 == Integration
 
 		sph->render();
-
-		glDepthMask(GL_TRUE);
-		glDisable(GL_BLEND);
 	};
 	
 	GLTools::render(window, loop);

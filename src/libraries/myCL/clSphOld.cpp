@@ -1,15 +1,16 @@
 #define PI 3.14159265359
 
-#include "clSph.h"
+#include "clSphOld.h"
 
-CLsph::CLsph(float delta, float radius, float r0)
+CLsphOld::CLsphOld()
 {
 	printf("Initialize OpenCL Object and context \n");
 
 	//normal sph
-	dt = delta; 
-	smoothingLength = radius; 
-	rho0 = r0;
+	dt = 0.0075f; 
+	smoothingLength = 0.1f; 
+	rho0 = 1000;
+	//visc 20, mass 0.25, gas 0.75
 
 	poly6 = 315/(64*PI*pow(smoothingLength,9));
 	spiky = -45/(PI*pow(smoothingLength,6));
@@ -69,11 +70,11 @@ CLsph::CLsph(float delta, float radius, float r0)
 	printf("OpenCL has been initialized \n###################################################### \n");
 }
 
-CLsph::~CLsph()
+CLsphOld::~CLsphOld()
 {
 }
 
-void CLsph::loadProgram(std::string kernel_source)
+void CLsphOld::loadProgram(std::string kernel_source)
 {
 	//Program Setup
 	int program_length;
@@ -110,7 +111,7 @@ void CLsph::loadProgram(std::string kernel_source)
 
 }
 
-void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<float> life, std::vector<int> neighbours,std::vector<int> counter, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass,std::vector<glm::vec4> forceIntern)
+void CLsphOld::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<int> neighbours,std::vector<int> counter, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass,std::vector<glm::vec4> forceIntern)
 {
 	printf("LOAD DATA \n");
 	//store number of particles and the size of bytes of our arrays
@@ -132,9 +133,6 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 
 	//create OpenCL only arrays
 	cl_velocities = cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
-	cl_pos_gen =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
-	cl_vel_gen =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
-	cl_life = cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_neighbours = cl::Buffer(m_context, CL_MEM_READ_WRITE, int_size, NULL, &m_err); 
 	cl_counter = cl::Buffer(m_context, CL_MEM_READ_WRITE, normal_int_size, NULL, &m_err); 
 	cl_density =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
@@ -148,9 +146,6 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	//push CPU arrays to the GPU 
 	//data is thightly packed in std::vector starting with the adress of the first element
 	m_err = m_queue.enqueueWriteBuffer(cl_velocities, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_pos_gen, CL_TRUE,0, array_size, &pos[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_vel_gen, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_life, CL_TRUE,0, float_size, &life[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_neighbours, CL_TRUE,0, int_size, &neighbours[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_counter, CL_TRUE,0, normal_int_size, &counter[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_density, CL_TRUE,0, float_size, &density[0], NULL, &m_event);
@@ -162,7 +157,7 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	printf("######################################################\n");
 }
 
-void CLsph::genNeighboursKernel()
+void CLsphOld::genNeighboursKernel()
 {
 	printf("genNeighboursKernel\n");
 	
@@ -196,7 +191,7 @@ void CLsph::genNeighboursKernel()
 	printf("######################################################\n");
 }
 
-void CLsph::genDensityKernel()
+void CLsphOld::genDensityKernel()
 {
 	printf("genDensityKernel\n");
 	
@@ -235,7 +230,7 @@ void CLsph::genDensityKernel()
 	printf("######################################################\n");
 }
 
-void CLsph::genSPHKernel()
+void CLsphOld::genSPHKernel()
 {
 	printf("genSPHKernel\n");
 	
@@ -277,7 +272,7 @@ void CLsph::genSPHKernel()
 	printf("######################################################\n");
 }
 
-void CLsph::genIntegrationKernel()
+void CLsphOld::genIntegrationKernel()
 {
 	printf("genIntegrationKernel\n");
 	
@@ -297,14 +292,11 @@ void CLsph::genIntegrationKernel()
 	{
 		m_err = m_IntegrationKernel.setArg(0,cl_vbos[0]);
 		m_err = m_IntegrationKernel.setArg(1,cl_velocities);
-		m_err = m_IntegrationKernel.setArg(2,cl_pos_gen);
-		m_err = m_IntegrationKernel.setArg(3,cl_vel_gen);
-		m_err = m_IntegrationKernel.setArg(4,cl_life);
-		m_err = m_IntegrationKernel.setArg(5,cl_density);
-		m_err = m_IntegrationKernel.setArg(6,cl_mass);
-		m_err = m_IntegrationKernel.setArg(7,cl_forceIntern);
-		m_err = m_IntegrationKernel.setArg(8,rho0);
-		m_err = m_IntegrationKernel.setArg(9,dt);
+		m_err = m_IntegrationKernel.setArg(2,cl_density);
+		m_err = m_IntegrationKernel.setArg(3,cl_mass);
+		m_err = m_IntegrationKernel.setArg(4,cl_forceIntern);
+		m_err = m_IntegrationKernel.setArg(5,rho0);
+		m_err = m_IntegrationKernel.setArg(6,dt);
 
 
 	}catch(cl::Error er)
@@ -318,7 +310,7 @@ void CLsph::genIntegrationKernel()
 	printf("######################################################\n");
 }
 
-void CLsph::runKernel(int kernelnumber)
+void CLsphOld::runKernel(int kernelnumber)
 {
 
 	//update the system by calculating new velocities and updating positions of particles
@@ -406,12 +398,12 @@ void CLsph::runKernel(int kernelnumber)
 
 }
 
-void CLsph::render()
+void CLsphOld::render()
 {
 	//render Particles from VBOS
-	glEnable(GL_POINT_SPRITE);
+//	glEnable(GL_POINT_SPRITE);
 	glEnable(GL_POINT_SMOOTH);
-	glPointSize(20);
+	glPointSize(7.5);
 
 	glBindBuffer(GL_ARRAY_BUFFER, p_vbo); //p_vbo is 0
 	//glEnableVertexAttribArray(0);

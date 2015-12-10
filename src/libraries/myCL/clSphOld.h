@@ -1,5 +1,5 @@
-#ifndef CLSPH_H
-#define CLSPH_H
+#ifndef CLSPHGAS_H
+#define CLSPHGAS_H
 
 #define __CL_ENABLE_EXCEPTIONS
 
@@ -20,7 +20,7 @@
 
 #include <glm/glm.hpp>
 
-class CLsph
+class CLsphOld
 {
 	public:
 
@@ -29,16 +29,12 @@ class CLsph
 		cl::Buffer cl_counter; 
 		cl::Buffer cl_velocities;	//particle velocity
 		
-		cl::Buffer cl_pos_gen;		//want to have the start points reseting particles
-		cl::Buffer cl_vel_gen;
-		
 		//SPH parameters and Buffers
 		cl::Buffer cl_density;
 		cl::Buffer cl_pressure;
 		cl::Buffer cl_viscosity;
 		cl::Buffer cl_mass;
 		cl::Buffer cl_forceIntern;
-		cl::Buffer cl_life;
 
 		float dt;
 		float poly6;
@@ -56,9 +52,9 @@ class CLsph
 		size_t	normal_int_size; //(m_num)
 
 		//default constructor initializes OpenCL Context and chooses platform and device
-		CLsph(float delta, float radiush, float r0);
+		CLsphOld();
 		//default deconstructor releases OpenCL objects and frees device memory
-		~CLsph();
+		~CLsphOld();
 
 		//load OpenCL program from a file
 		//pass in the kernel source code as a string. 
@@ -69,7 +65,6 @@ class CLsph
 		//setup the data for the kernel
 		void loadData(std::vector<glm::vec4> pos, 
 					  std::vector<glm::vec4> vel,
-					  std::vector<float> life,
 					  std::vector<int> neighbours,
 					  std::vector<int> counter,
 					  std::vector<float> density, 
@@ -110,4 +105,4 @@ class CLsph
 		cl::Event m_event;
 };
 
-#endif //CLSPH_H
+#endif //CLSPHGAS_H
