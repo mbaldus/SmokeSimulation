@@ -149,7 +149,7 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
         life[i] = 0.5;    
     }	
 
-
+	
 	
 
 	float b = 2;
@@ -177,15 +177,15 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 		p_new.y = -0.5f;
 	}	
 	
-	if(p_old.y > 0.75)
-	{
-		v_new.y *= bDamp ;
-		p_new.y = 0.75f;
-	}
+	//if(p_old.y > 1)
+	//{
+	//	v_new.y *= bDamp ;
+	//	p_new.y = 1;
+	//}
 
-	if(p_old.x > 0.75){
+	if(p_old.x > 1){
 		v_new.x *= bDamp;
-		p_new.x = 0.75;
+		p_new.x = 1;
 	}
 
 	if(p_old.x < -0.75){
@@ -204,7 +204,9 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 	}
 
 	//damping
-	//v_new.xyz *= 0.99999f;
+	v_new.xyz *= 0.99999f;
+
+	//pos[i].w= life[i];
 
     //update the arrays with newly computed values
     pos[i].xyz = p_new.xyz;

@@ -27,7 +27,7 @@ int main(void) {
 
 	Trackball trackball(GLTools::getWidth(window),GLTools::getHeight(window));
 	Sphere* sphere = new Sphere(0.25);
-	Texture* tex = new Texture(TEXTURES_PATH "/Smoke10.png");
+	Texture* tex = new Texture(TEXTURES_PATH "/smoke10.png");
 	
 	//actual best result: mass = 0.000025f
 	CLsph* sph = new CLsph(0.00375f,0.05f,0.59);
@@ -107,11 +107,12 @@ int main(void) {
 		glEnable(GL_DEPTH_TEST);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glEnable(GL_ALPHA_TEST);
+		/*glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.05);
-
+*/
 		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		glDepthMask(GL_FALSE);
+		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 		
 	
 		shaderprogram->use();
@@ -122,8 +123,11 @@ int main(void) {
 		sph->runKernel(DENSITY);	 //1 == Dichte und Druckberechnung
 		sph->runKernel(SPH);		 //2 == Sph
 		sph->runKernel(INTEGRATION); //3 == Integration
-	
+
 		sph->render();
+
+		glDepthMask(GL_TRUE);
+		glDisable(GL_BLEND);
 	};
 	
 	GLTools::render(window, loop);
