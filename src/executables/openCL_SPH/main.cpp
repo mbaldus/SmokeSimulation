@@ -48,23 +48,31 @@ int main(void) {
 	std::vector<float> mass(num);
 	std::vector<glm::vec4> forceIntern(num);
 	
-	//spawn on plane
 	for (int i = 0; i <num; i++)
 	{
+		//type 1
 		float x = rand_float(-0.75,-0.5);
+		float z = rand_float(-0.125,0.125);
+		float y = rand_float(0.25,0.5);
+		
+		float life_r =rand_float(0.0f,0.25f);
+		float rand_vel = rand_float(0.7,1);
+		vel[i] = glm::vec4(3*rand_vel,rand_vel,0,0);
+		
+
+		//type 2
+		/*float x = rand_float(-0.75,-0.5);
 		float z = rand_float(-0.125,0.125);
 		float y = rand_float(-.5,0);
 
-		pos[i] = glm::vec4(x,y,z,1.0f);
-		
-		float life_r =rand_float(0.0f,0.5f);
+		float life_r =rand_float(0.0f,0.25f);
 		float rand_vel = rand_float(0.3,1);
-		//glm::vec3 initial_vel =  glm::vec3(x,rand_y,z);
-		
-		vel[i] = glm::vec4(rand_vel,rand_vel,0,0);
+		vel[i] = glm::vec4(2*rand_vel,rand_vel,0,0);*/
+
+
+	
+		pos[i] = glm::vec4(x,y,z,1.0f);
 		life[i] = life_r;
-		
-		//printf("vel: %f,%f,%f\n", vel[i].x, vel[i].y, vel[i].z);
 		density[i] = 0.0f;
 		pressure[i] = 1.0f;
 		viscosity[i] = 1.0f;
@@ -94,13 +102,13 @@ int main(void) {
 	shaderprogram->update("projection",projection);
 	shaderprogram->update("lightDir", glm::vec3(0,0,1)); // for pointSpheres.frag
 	//###################################################################
-
-
+	int delay = 0;
+	int i = 0;
 	std::function<void(double)> loop = 
 		[&sph,
 		&shaderprogram,
 		&trackball, &sphere,
-		&view, 
+		&view, &delay, &i,
 		&neighbours,
 		&window](double deltatime)
 	{
@@ -114,10 +122,17 @@ int main(void) {
 		glDepthMask(GL_FALSE);
 		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 		
-	
 		shaderprogram->use();
 		trackball.update(window,view);
 		shaderprogram->update("view", view);
+
+		if (delay % 60 == 0)
+		{
+			printf("seconds = %d \n", i);
+			i++;
+			delay = 0;
+		}
+		delay++;
 		
 		sph->runKernel(NEIGHBOURS);  //0 == Nachbarschaftssuche
 		sph->runKernel(DENSITY);	 //1 == Dichte und Druckberechnung
@@ -128,6 +143,7 @@ int main(void) {
 
 		glDepthMask(GL_TRUE);
 		glDisable(GL_BLEND);
+
 	};
 	
 	GLTools::render(window, loop);

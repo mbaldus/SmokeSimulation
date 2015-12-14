@@ -146,7 +146,7 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
     {
         p_old = pos_gen[i];
         v_old = vel_gen[i];
-        life[i] = 0.5;    
+        life[i] = 0.25;    
     }	
 
 	
@@ -169,7 +169,7 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 	//compute new position with computed velocity
 	p_new.xyz = p_old.xyz + v_new.xyz * dt ;
 
-	float bDamp = -0.05;
+	float bDamp = -0.35;
 	//boundarys
 	if(p_old.y < -0.5)
 	{
@@ -177,11 +177,11 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 		p_new.y = -0.5f;
 	}	
 	
-	//if(p_old.y > 1)
-	//{
-	//	v_new.y *= bDamp ;
-	//	p_new.y = 1;
-	//}
+	if(p_old.y > 2)
+	{
+		v_new.y *= bDamp ;
+		p_new.y = 2;
+	}
 
 	if(p_old.x > 1){
 		v_new.x *= bDamp;

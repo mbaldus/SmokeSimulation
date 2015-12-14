@@ -2,7 +2,8 @@
 
  //!< in-variables
 layout(location = 0) in vec4 positionAttribute;
-//layout(loaction = 1) in vec2 uvCoordAttribute;
+layout(loaction = 1) in float densityBuffer;
+//layout(loaction = 2) in float lifeBuffer;
 
 //!< out-variables
 
