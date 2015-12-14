@@ -24,7 +24,7 @@ class CLsph
 {
 	public:
 
-		std::vector<cl::Memory> cl_vbos; //0: position VBO, 1: color VBO
+		std::vector<cl::Memory> cl_vbos; //0: position VBO, 1: lifetime VBO 2: density VBO
 		cl::Buffer cl_neighbours;   //Neighbours
 		cl::Buffer cl_counter; 
 		cl::Buffer cl_velocities;	//particle velocity
@@ -33,12 +33,12 @@ class CLsph
 		cl::Buffer cl_vel_gen;
 		
 		//SPH parameters and Buffers
-		cl::Buffer cl_density;
+		//cl::Buffer cl_density;
 		cl::Buffer cl_pressure;
 		cl::Buffer cl_viscosity;
 		cl::Buffer cl_mass;
 		cl::Buffer cl_forceIntern;
-		cl::Buffer cl_life;
+		//cl::Buffer cl_life;
 
 		float dt;
 		float poly6;
@@ -48,7 +48,8 @@ class CLsph
 		float rho0;
 		
 		int p_vbo; //position VBO
-		int c_vbo; //color VBO
+		int life_vbo; //life VBO
+		int dens_vbo; //density VBO
 		int m_num; //nuber of particles
 		size_t array_size; //the size of our arrays num * sizeof(Vec4)
 		size_t int_size; //size of particles amount * count of saved neighbours per particle

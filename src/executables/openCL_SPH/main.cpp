@@ -24,11 +24,15 @@ int main(void) {
 	printf("OpenCL Particles\n");
 	
 	GLFWwindow* window = GLTools::generateWindow(1280,720,100,100,"SPH Demo");
+	glClearColor(0.85, 0.85, 0.85, 0.0);
 
 	Trackball trackball(GLTools::getWidth(window),GLTools::getHeight(window));
 	Sphere* sphere = new Sphere(0.25);
-	Texture* tex = new Texture(TEXTURES_PATH "/smoke10.png");
-	
+	Texture* tex1 = new Texture(TEXTURES_PATH "/smoke10.png");
+	//Texture* tex2 = new Texture(TEXTURES_PATH "/0090.png");
+	std::cout<<tex1->getHandle() <<std::endl;
+	//std::cout<<tex2->getHandle() <<std::endl;
+
 	//actual best result: mass = 0.000025f
 	CLsph* sph = new CLsph(0.00375f,0.05f,0.59);
     
@@ -92,7 +96,7 @@ int main(void) {
 
 //	ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/simpleFS.frag");
 	//ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/pointSpheres.frag");
-	ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/pointSpriteSphere.frag");
+	ShaderProgram* shaderprogram = new ShaderProgram("/smoke.vert", "/smokeSprite.frag");
 
 	glm::mat4 model = glm::mat4(1.0f);
 	glm::mat4 view = glm::lookAt(glm::vec3(0.0f,-0.1f,1.0f),glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,1.0f,0.0f));

@@ -2,6 +2,7 @@
 
 //!< in-variables
 in vec4 passPosition;
+in float passLifeBuffer;
 
 //!< uniforms
 uniform bool sphereColor;
@@ -18,19 +19,21 @@ return (sqrt((position.x*position.x) +(position.y*position.y)+(position.z*positi
 
 void main()
 {
-if (!sphereColor)
-{
-	if (inSphere(passPosition.xyz, 0.3))
+	if (!sphereColor)
 	{
-	//	fragcolor = vec4(1,0,0,1);
+		if (inSphere(passPosition.xyz, 0.3))
+		{
+		//fragcolor = vec4(1,0,0,1);
 		fragcolor = texture(tex, gl_PointCoord);
-	}
+		fragcolor.w *= passLifeBuffer;
+		}
 	else
 	{
-	//fragcolor = vec4(1,1,1,1-passPosition.y+1);
+	//fragcolor = vec4(1,1,1,passLifeBuffer);
 	fragcolor = texture(tex, gl_PointCoord);
+	fragcolor.w *= passLifeBuffer;
 	}
-}else
+	}else
 {
 	fragcolor = vec4(0.1,0.1,0.1,1);
 	//fragcolor = vec4(passPosition.x,passPosition.y,passPosition.z,1-passPosition.y);
