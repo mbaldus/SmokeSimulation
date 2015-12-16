@@ -4,6 +4,7 @@
 layout(location = 0) in vec4 positionAttribute;
 layout(location = 1) in float lifeBuffer;
 layout(location = 2) in float densityBuffer;
+layout(location = 3) in float rndmS;
 
 //!< out-variables
 
@@ -14,6 +15,7 @@ uniform mat4 projection;
 out vec4 passPosition;
 out float passLifeBuffer;
 out float passDensityBuffer;
+out float rndmSprite;
 
 void main()
 {
@@ -21,6 +23,7 @@ void main()
 	passPosition = model * positionAttribute;
 	passLifeBuffer = lifeBuffer;
 	passDensityBuffer = densityBuffer;
+	rndmSprite = rndmS;
 
-	gl_PointSize = 75 / gl_Position.w;
+	gl_PointSize = 100 / gl_Position.w;
 }

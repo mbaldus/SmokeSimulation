@@ -28,10 +28,10 @@ int main(void) {
 
 	Trackball trackball(GLTools::getWidth(window),GLTools::getHeight(window));
 	Sphere* sphere = new Sphere(0.25);
-	Texture* tex1 = new Texture(TEXTURES_PATH "/smoke10.png");
-	//Texture* tex2 = new Texture(TEXTURES_PATH "/0090.png");
+	Texture* tex1 = new Texture(TEXTURES_PATH "/smoke7.png");
+	Texture* tex2 = new Texture(TEXTURES_PATH "/0090.png");
 	std::cout<<tex1->getHandle() <<std::endl;
-	//std::cout<<tex2->getHandle() <<std::endl;
+	std::cout<<tex2->getHandle() <<std::endl;
 
 	//actual best result: mass = 0.000025f
 	CLsph* sph = new CLsph(0.00375f,0.05f,0.59);
@@ -44,6 +44,7 @@ int main(void) {
 	std::vector<glm::vec4> pos(num);
 	std::vector<glm::vec4> vel(num);
 	std::vector<float> life(num);
+	std::vector<float> rndmSprite(num);
 	std::vector<int> neighbours(num*50);
 	std::vector<int> counter(num); //not num (count of neighbours)
 	std::vector<float> density(num);
@@ -77,15 +78,18 @@ int main(void) {
 	
 		pos[i] = glm::vec4(x,y,z,1.0f);
 		life[i] = life_r;
+		rndmSprite[i] = float(i % 2);
+		//std::cout<<rndmSprite[i]<<std::endl;
 		density[i] = 0.0f;
 		pressure[i] = 1.0f;
 		viscosity[i] = 1.0f;
 		mass[i] = 0.000025f;
 		forceIntern[i] = glm::vec4(0,0,0,0);
 		counter[i]=0;
+
 	}
 	
-	sph->loadData(pos,vel,life,neighbours,counter,density,pressure,viscosity,mass,forceIntern); 
+	sph->loadData(pos,vel,life,rndmSprite, neighbours,counter,density,pressure,viscosity,mass,forceIntern); 
 	sph->genNeighboursKernel();
 	sph->genDensityKernel();
 	sph->genIntegrationKernel();
@@ -105,6 +109,19 @@ int main(void) {
 	shaderprogram->update("view",view);
 	shaderprogram->update("projection",projection);
 	shaderprogram->update("lightDir", glm::vec3(0,0,1)); // for pointSpheres.frag
+
+	//Textures::
+	shaderprogram->use();
+	GLuint t1Loc =glGetUniformLocation(shaderprogram->getShaderProgramHandle(), "tex1");
+	glUniform1i(t1Loc,tex1->getHandle());
+	glActiveTexture(GL_TEXTURE0+1);
+	glBindTexture(GL_TEXTURE_2D, tex1->getHandle());
+	
+	GLuint t2Loc =glGetUniformLocation(shaderprogram->getShaderProgramHandle(), "tex2");
+	glUniform1i(t2Loc, tex2->getHandle());
+	glActiveTexture(GL_TEXTURE0+2);
+	glBindTexture(GL_TEXTURE_2D, tex2->getHandle());
+	
 	//###################################################################
 	int delay = 0;
 	int i = 0;
@@ -112,6 +129,7 @@ int main(void) {
 		[&sph,
 		&shaderprogram,
 		&trackball, &sphere,
+		&model,
 		&view, &delay, &i,
 		&neighbours,
 		&window](double deltatime)
@@ -120,8 +138,8 @@ int main(void) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		/*glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.05);
-*/
+		glAlphaFunc(GL_GREATER, 0.005);*/
+
 		glEnable(GL_BLEND);
 		glDepthMask(GL_FALSE);
 		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
