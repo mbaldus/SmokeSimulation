@@ -193,9 +193,9 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 		p_new.x = -0.75f;
 	}
 
-	if(p_old.z > 0.5){
+	if(p_old.z > 1){
 		v_new.z *= bDamp;
-		p_new.z = 0.5;
+		p_new.z = 1;
 	}
 
 	if(p_old.z < -0.5){

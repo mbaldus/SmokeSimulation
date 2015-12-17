@@ -14,7 +14,7 @@ public:
 
    ~ShaderProgram();
 
-   GLint getShaderProgramHandle();
+   GLuint getShaderProgramHandle();
 
     virtual void use();
 

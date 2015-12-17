@@ -64,6 +64,11 @@ void ShaderProgram::link()
 	}
 }
     
+GLuint ShaderProgram::getShaderProgramHandle()
+{
+	return m_shaderProgramHandle;
+}
+
 void ShaderProgram::use()
 {
 	glUseProgram(m_shaderProgramHandle);

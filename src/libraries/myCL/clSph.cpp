@@ -91,7 +91,6 @@ void CLsph::loadProgram(std::string kernel_source)
 	{
 		printf("Error: %s(%s)\n", er.what(), oclErrorString(er.err()));
 	}
-	//printf("cll.cpp: build program\n");
 
 	try
 	{
@@ -110,7 +109,7 @@ void CLsph::loadProgram(std::string kernel_source)
 
 }
 
-void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<float> life, std::vector<int> neighbours,std::vector<int> counter, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass,std::vector<glm::vec4> forceIntern)
+void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<float> life, std::vector<float> rndm, std::vector<int> neighbours,std::vector<int> counter, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass,std::vector<glm::vec4> forceIntern)
 {
 	printf("LOAD DATA \n");
 	//store number of particles and the size of bytes of our arrays
@@ -121,23 +120,27 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	float_size = m_num * sizeof(float);
 	
 	//create VBO's (util.cpp)
-	p_vbo = createVBO(&pos[0], array_size, 4, 0); //id 1
+	p_vbo = createVBO(&pos[0], array_size, 4, 0); 
+	life_vbo = createVBO(&life[0], float_size, 1,1);
+	dens_vbo = createVBO(&density[0], float_size, 1, 2);
+	rndm_vbo = createVBO(&rndm[0], float_size, 1, 3);
+	//printf("p_vbo = %d, life_vbo = %d, rndm_vbo = %d \n" , p_vbo, life_vbo, rndm_vbo);
 
 	//make sure OpenGL is finishedn before proceeding
 	glFinish();
 
 	//create OpenCL buffer from GL VBO
 	cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, p_vbo, &m_err));
-	//cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, c_vbo, &m_err));
+	cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, life_vbo, &m_err));
+	cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, dens_vbo, &m_err));
+	cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, rndm_vbo, &m_err));
 
 	//create OpenCL only arrays
 	cl_velocities = cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
 	cl_pos_gen =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
 	cl_vel_gen =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
-	cl_life = cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_neighbours = cl::Buffer(m_context, CL_MEM_READ_WRITE, int_size, NULL, &m_err); 
 	cl_counter = cl::Buffer(m_context, CL_MEM_READ_WRITE, normal_int_size, NULL, &m_err); 
-	cl_density =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_pressure =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_viscosity =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_mass =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
@@ -150,10 +153,8 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	m_err = m_queue.enqueueWriteBuffer(cl_velocities, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_pos_gen, CL_TRUE,0, array_size, &pos[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_vel_gen, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_life, CL_TRUE,0, float_size, &life[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_neighbours, CL_TRUE,0, int_size, &neighbours[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_counter, CL_TRUE,0, normal_int_size, &counter[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_density, CL_TRUE,0, float_size, &density[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_pressure, CL_TRUE,0, float_size, &pressure[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_viscosity, CL_TRUE,0, float_size, &viscosity[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_mass, CL_TRUE,0, float_size, &mass[0], NULL, &m_event);
@@ -217,7 +218,7 @@ void CLsph::genDensityKernel()
 		m_err = m_DensityKernel.setArg(0,cl_vbos[0]);
 		m_err = m_DensityKernel.setArg(1,cl_neighbours);
 		m_err = m_DensityKernel.setArg(2,cl_counter);
-		m_err = m_DensityKernel.setArg(3,cl_density);
+		m_err = m_DensityKernel.setArg(3,cl_vbos[2]); //density
 		m_err = m_DensityKernel.setArg(4,cl_pressure);
 		m_err = m_DensityKernel.setArg(5,cl_mass);
 		m_err = m_DensityKernel.setArg(6,smoothingLength);
@@ -257,7 +258,7 @@ void CLsph::genSPHKernel()
 		m_err = m_SphKernel.setArg(1,cl_velocities);
 		m_err = m_SphKernel.setArg(2,cl_neighbours);
 		m_err = m_SphKernel.setArg(3,cl_counter);
-		m_err = m_SphKernel.setArg(4,cl_density);
+		m_err = m_SphKernel.setArg(4,cl_vbos[2]); //density
 		m_err = m_SphKernel.setArg(5,cl_pressure);
 		m_err = m_SphKernel.setArg(6,cl_viscosity);
 		m_err = m_SphKernel.setArg(7,cl_mass);
@@ -299,8 +300,8 @@ void CLsph::genIntegrationKernel()
 		m_err = m_IntegrationKernel.setArg(1,cl_velocities);
 		m_err = m_IntegrationKernel.setArg(2,cl_pos_gen);
 		m_err = m_IntegrationKernel.setArg(3,cl_vel_gen);
-		m_err = m_IntegrationKernel.setArg(4,cl_life);
-		m_err = m_IntegrationKernel.setArg(5,cl_density);
+		m_err = m_IntegrationKernel.setArg(4,cl_vbos[1]); //life
+		m_err = m_IntegrationKernel.setArg(5,cl_vbos[2]); //density
 		m_err = m_IntegrationKernel.setArg(6,cl_mass);
 		m_err = m_IntegrationKernel.setArg(7,cl_forceIntern);
 		m_err = m_IntegrationKernel.setArg(8,rho0);
@@ -411,10 +412,7 @@ void CLsph::render()
 	//render Particles from VBOS
 	glEnable(GL_POINT_SPRITE);
 	glEnable(GL_POINT_SMOOTH);
-	glPointSize(20);
-
-	glBindBuffer(GL_ARRAY_BUFFER, p_vbo); //p_vbo is 0
-	//glEnableVertexAttribArray(0);
+	glEnable(GL_PROGRAM_POINT_SIZE);
 	
 	glDrawArrays(GL_POINTS, 0, m_num);
 }
