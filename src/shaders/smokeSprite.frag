@@ -18,12 +18,12 @@ void main()
 {
 		fragcolor = texture(tex1, gl_PointCoord);
 		fragcolor.w *= 2*passLifeBuffer;
-		fragcolor.xyz -= 0.125*passDensityBuffer;
+		fragcolor.xyz -= 0.25*passDensityBuffer;
 	
-		if(passPosition.y < 0.5)
+		if(passPosition.y < 0.35)
 			{
 			fragcolor = texture(tex1, gl_PointCoord);
-			fragcolor.w *= 2*passLifeBuffer;
+			//fragcolor.w *= 2*passLifeBuffer;
 			//fragcolor.xyz *= passDensityBuffer;
 			}
 	
