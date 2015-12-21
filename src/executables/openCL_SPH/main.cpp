@@ -29,7 +29,7 @@ int main(void) {
 	Trackball trackball(GLTools::getWidth(window),GLTools::getHeight(window));
 	Sphere* sphere = new Sphere(0.25);
 	Texture* tex1 = new Texture(TEXTURES_PATH "/smoke7.png");
-	Texture* tex2 = new Texture(TEXTURES_PATH "/0090.png");
+	Texture* tex2 = new Texture(TEXTURES_PATH "/smoke9.png");
 	std::cout<<tex1->getHandle() <<std::endl;
 	std::cout<<tex2->getHandle() <<std::endl;
 
@@ -61,8 +61,8 @@ int main(void) {
 		float y = rand_float(0.25,0.5);
 		
 		float life_r =rand_float(0.0f,0.25f);
-		float rand_vel = rand_float(0.7,1);
-		vel[i] = glm::vec4(3*rand_vel,rand_vel,0,0);
+		float rand_vel = rand_float(0.5,1);
+		vel[i] = glm::vec4(3*rand_vel,1.5*rand_vel,0,0);
 		
 
 		//type 2
@@ -115,11 +115,13 @@ int main(void) {
 	GLuint t1Loc =glGetUniformLocation(shaderprogram->getShaderProgramHandle(), "tex1");
 	glUniform1i(t1Loc,tex1->getHandle());
 	glActiveTexture(GL_TEXTURE0+1);
+	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, tex1->getHandle());
 	
 	GLuint t2Loc =glGetUniformLocation(shaderprogram->getShaderProgramHandle(), "tex2");
 	glUniform1i(t2Loc, tex2->getHandle());
 	glActiveTexture(GL_TEXTURE0+2);
+	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, tex2->getHandle());
 	
 	//###################################################################

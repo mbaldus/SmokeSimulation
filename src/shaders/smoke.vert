@@ -25,5 +25,5 @@ void main()
 	passDensityBuffer = densityBuffer;
 	rndmSprite = rndmS;
 
-	gl_PointSize = 100 / gl_Position.w;
+	gl_PointSize = (1-lifeBuffer) * 300 / gl_Position.w;
 }

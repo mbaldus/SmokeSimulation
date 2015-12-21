@@ -152,7 +152,7 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 	
 	
 
-	float b = 2;
+	float b = 1.5;
 	//float gravityForce = -9.81f * mass[i];
 	float gravityForce = b * (density[i] - rho0) * -9.81f * mass[i];
 
@@ -198,9 +198,9 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 		p_new.z = 1;
 	}
 
-	if(p_old.z < -0.5){
+	if(p_old.z < -1){
 		v_new.z *= bDamp;
-		p_new.z = -0.5f;
+		p_new.z = -1.f;
 	}
 
 	//damping
