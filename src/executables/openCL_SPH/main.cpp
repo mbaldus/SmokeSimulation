@@ -19,6 +19,27 @@
 #include <GL/Texture.h>
  
 
+void loadAndBindTextures(Texture* textures[], ShaderProgram* shaderprogram)
+{
+	textures[0] = new Texture(TEXTURES_PATH "/smoke10.png");
+	textures[1] = new Texture(TEXTURES_PATH "/smoke1.png");
+	textures[2] = new Texture(TEXTURES_PATH "/smoke2.png");
+	textures[3] = new Texture(TEXTURES_PATH "/smoke3.png");
+	textures[4] = new Texture(TEXTURES_PATH "/smoke4.png");
+	textures[5] = new Texture(TEXTURES_PATH "/smoke5.png");
+	textures[6] = new Texture(TEXTURES_PATH "/smoke6.png");
+	textures[7] = new Texture(TEXTURES_PATH "/smoke7.png");
+	textures[8] = new Texture(TEXTURES_PATH "/smoke8.png");
+	textures[9] = new Texture(TEXTURES_PATH "/smoke9.png");
+	
+	shaderprogram->use();
+
+	for (int i = 0; i < 10; i++)
+	{
+		glActiveTexture(GL_TEXTURE0+i);
+		glBindTexture(GL_TEXTURE_2D, textures[i]->getHandle());
+	}
+}
 
 int main(void) {
 	printf("OpenCL Particles\n");
@@ -28,10 +49,6 @@ int main(void) {
 
 	Trackball trackball(GLTools::getWidth(window),GLTools::getHeight(window));
 	Sphere* sphere = new Sphere(0.25);
-	Texture* tex1 = new Texture(TEXTURES_PATH "/smoke7.png");
-	Texture* tex2 = new Texture(TEXTURES_PATH "/smoke9.png");
-	std::cout<<tex1->getHandle() <<std::endl;
-	std::cout<<tex2->getHandle() <<std::endl;
 
 	//actual best result: mass = 0.000025f
 	CLsph* sph = new CLsph(0.00375f,0.05f,0.59);
@@ -78,7 +95,7 @@ int main(void) {
 	
 		pos[i] = glm::vec4(x,y,z,1.0f);
 		life[i] = life_r;
-		rndmSprite[i] = float(i % 2);
+		rndmSprite[i] = float(i % 10);
 		//std::cout<<rndmSprite[i]<<std::endl;
 		density[i] = 0.0f;
 		pressure[i] = 1.0f;
@@ -97,9 +114,6 @@ int main(void) {
 
 	//###################################################################
 	//				GL ShaderProgram and Camera Settings
-
-//	ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/simpleFS.frag");
-	//ShaderProgram* shaderprogram = new ShaderProgram("/simpleVS.vert", "/pointSpheres.frag");
 	ShaderProgram* shaderprogram = new ShaderProgram("/smoke.vert", "/smokeSprite.frag");
 
 	glm::mat4 model = glm::mat4(1.0f);
@@ -110,19 +124,11 @@ int main(void) {
 	shaderprogram->update("projection",projection);
 	shaderprogram->update("lightDir", glm::vec3(0,0,1)); // for pointSpheres.frag
 
-	//Textures::
-	shaderprogram->use();
-	GLuint t1Loc =glGetUniformLocation(shaderprogram->getShaderProgramHandle(), "tex1");
-	glUniform1i(t1Loc,tex1->getHandle());
-	glActiveTexture(GL_TEXTURE0+1);
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, tex1->getHandle());
-	
-	GLuint t2Loc =glGetUniformLocation(shaderprogram->getShaderProgramHandle(), "tex2");
-	glUniform1i(t2Loc, tex2->getHandle());
-	glActiveTexture(GL_TEXTURE0+2);
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, tex2->getHandle());
+	//						    Textures
+	Texture* textures[10];
+	loadAndBindTextures(textures, shaderprogram);
+	GLint smokeTexs[10]={0,1,2,3,4,5,6,7,8,9}; //Array that Contains all Smoketextures for Uniform
+	glUniform1iv(glGetUniformLocation(shaderprogram->getShaderProgramHandle(), "smokeTextures"), 10, smokeTexs);
 	
 	//###################################################################
 	int delay = 0;
