@@ -78,8 +78,8 @@ int main(void) {
 		float y = rand_float(0.25,0.5);
 		
 		float life_r =rand_float(0.0f,1.0f);
-		float rand_vel = rand_float(0.5,1);
-		vel[i] = glm::vec4(3*rand_vel,1.5*rand_vel,0,0);*/
+		float rand_vel = rand_float(0.5,3);
+		vel[i] = glm::vec4(rand_vel,0.5*rand_vel,0,0);*/
 		//buyonacy to 1.5
 
 		//type 2 (from chimney)
