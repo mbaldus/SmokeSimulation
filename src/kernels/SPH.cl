@@ -54,7 +54,7 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 	float4 p = pos[i];
 	float rho = 0;
 	float pressure_new = 0;
-	float k = 0.000075; //Gaskonstante
+	float k = 0.00125; //Gaskonstante
 
 	for(int index = 0; index < counter[i]; index++)
 	{
@@ -82,7 +82,7 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
     unsigned int i = get_global_id(0);
 
 	float4 p = pos[i];
-	float viscosityConst = 0.00000005; //je größer desto mehr zusammenhalt
+	float viscosityConst = 0.0000005; //je größer desto mehr zusammenhalt
 	
 	float4 f_pressure = 0.0f;
 	float4 f_viscosity = 0.0f;
@@ -141,18 +141,18 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 	float4 p_new = p_old;
 	float4 v_new = v_old;
 
-	life[i] -= 0.1*dt;
+	life[i] -= 0.15*dt;
 	if(life[i] <= 0)
     {
         p_old = pos_gen[i];
         v_old = vel_gen[i];
-        life[i] = 0.25;    
+        life[i] = 1.0;    
     }	
 
 	
 	
 
-	float b = 1.5;
+	float b = 50;
 	//float gravityForce = -9.81f * mass[i];
 	float gravityForce = b * (density[i] - rho0) * -9.81f * mass[i];
 
@@ -161,15 +161,10 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 	v_new.y = v_old.y + ((forceIntern[i].y + gravityForce)/mass[i]) * dt;
 	v_new.z = v_old.z + (forceIntern[i].z/mass[i]) * dt;
 
-	/*v_new.x = v_old.x + (forceIntern[i].x/density[i]) * dt;
-	v_new.y = v_old.y + ((forceIntern[i].y + gravityForce)/density[i]) * dt;
-	v_new.z = v_old.z + (forceIntern[i].z/density[i]) * dt;
-    */
-
 	//compute new position with computed velocity
 	p_new.xyz = p_old.xyz + v_new.xyz * dt ;
 
-	float bDamp = -0.35;
+	float bDamp = -1.2;
 	//boundarys
 	if(p_old.y < -0.5)
 	{
@@ -205,8 +200,6 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 
 	//damping
 	v_new.xyz *= 0.99999f;
-
-	//pos[i].w= life[i];
 
     //update the arrays with newly computed values
     pos[i].xyz = p_new.xyz;
