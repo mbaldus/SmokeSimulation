@@ -72,25 +72,25 @@ int main(void) {
 	
 	for (int i = 0; i <num; i++)
 	{
-		//type 1
-		float x = rand_float(-0.75,-0.5);
+		//type 1 (from side)
+	/*	float x = rand_float(-0.75,-0.5);
 		float z = rand_float(-0.125,0.125);
 		float y = rand_float(0.25,0.5);
 		
-		float life_r =rand_float(0.0f,0.25f);
-		float rand_vel = rand_float(0.5,1);
-		vel[i] = glm::vec4(3*rand_vel,1.5*rand_vel,0,0);
-		
+		float life_r =rand_float(0.0f,1.0f);
+		float rand_vel = rand_float(0.5,3);
+		vel[i] = glm::vec4(rand_vel,0.5*rand_vel,0,0);*/
+		//buyonacy to 1.5
 
-		//type 2
-		/*float x = rand_float(-0.75,-0.5);
+		//type 2 (from chimney)
+		float x = rand_float(-0.125,0.125);
 		float z = rand_float(-0.125,0.125);
-		float y = rand_float(-.5,0);
+		float y = rand_float(0.125,0.25);
 
-		float life_r =rand_float(0.0f,0.25f);
-		float rand_vel = rand_float(0.3,1);
-		vel[i] = glm::vec4(2*rand_vel,rand_vel,0,0);*/
-
+		float life_r =rand_float(0.0f,1.0f);
+		float rand_vel = rand_float(0.3,2.5);
+		vel[i] = glm::vec4(0,rand_vel,0,0);
+		//buyonacy to 50
 
 	
 		pos[i] = glm::vec4(x,y,z,1.0f);

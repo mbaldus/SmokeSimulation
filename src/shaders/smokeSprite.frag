@@ -16,7 +16,7 @@ void main()
 {
 		int texNr = int(rndmSprite+0.1);
 		fragcolor = texture(smokeTextures[texNr], gl_PointCoord);
-		fragcolor.w *= 1.5*passLifeBuffer;
+		fragcolor.w *= 0.2*passLifeBuffer; //0.2 * [0,1] -> [0,0.2]
 		fragcolor.xyz -= 0.375*passDensityBuffer;
 	/*
 		if(passPosition.y < 0.5)
