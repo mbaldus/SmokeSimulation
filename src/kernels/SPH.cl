@@ -30,7 +30,7 @@ __kernel void neighbours(__global float4* pos, __global int* neighbour,__global 
 	
 	counter[i] = 0;
 	//save neighbours of THIS particle in an array 
-	//array size is 1000(n) times bigger than pos[]
+	//array size is 50(n) times bigger than pos[]
 	for (int index = 0; index < get_global_size(0); index++)
 	{
 		if (distance(p.xyz, pos[index].xyz) <= smoothingLength) // < smoothingLength
@@ -43,7 +43,6 @@ __kernel void neighbours(__global float4* pos, __global int* neighbour,__global 
 		if (counter[i] >= 49)
 			break;
 	}
-	//printf("neighbour[%d] = %i:\n", 77, neighbour[77]);
 }
 
 __kernel void densityCalc(__global float4* pos, __global int* neighbour, __global int* counter, __global float* density, __global float* pressure, 
@@ -62,18 +61,11 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 		rho += pVarPoly(smoothingLength, distance(p.xyz ,pos[j].xyz));
 	}
 	rho *= poly6 * mass[i];
-    //printf("distance p-pos[] -> %f:\n", distance(p, pos[10]));
 
 	density[i] = rho;
-	/*if(density[i] == 0)
-		printf("RHO von [%d] == 0 \n" , i);*/
-	//printf("density[%d] = %f \n", i , density[i]);
 	pressure_new = k * (rho - rho0); //p = k * (rho-rho0)(k = stoffspezifische Konstante (Wasser 999kg/m³)) 
 
 	pressure[i] = pressure_new;
-	//printf("pressure[%d] = %f:\n", i, pressure[i]);
-	
-	//float f_buoyancy = b * (density[i] - rho0) * gravity ;
 }
 
 __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neighbour,__global int* counter, __global float* density, __global float* pressure, 
@@ -88,47 +80,22 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
 	float4 f_viscosity = 0.0f;
 
 	//force calculation
-
-
-	//for(int index = 0; index < 1000; index++)
-	//{
-	//	int j = neighbour[i * 1000 + index];
-	////fpressure calculation
-	//f_pressure.x += mass[j] * ((pressure[i] + pressure[j])/2*density[j]) * wSpiky(p.x - pos[j].x, smoothingLength, spiky);
-	//f_pressure.y += mass[j] * ((pressure[i] + pressure[j])/2*density[j]) * wSpiky(p.y - pos[j].y, smoothingLength, spiky);
-	//f_pressure.z += mass[j] * ((pressure[i] + pressure[j])/2*density[j]) * wSpiky(p.z - pos[j].z, smoothingLength, spiky);
-
-	//f_viscosity.x +=  mass[j] * ((vel[j].x - vel[i].x)/density[j]) * wVisc(p.x - pos[j].x, smoothingLength, visConst);
-	//f_viscosity.y +=  mass[j] * ((vel[j].y - vel[i].y)/density[j]) * wVisc(p.y - pos[j].y, smoothingLength, visConst);
-	//f_viscosity.z +=  mass[j] * ((vel[j].z - vel[i].z)/density[j]) * wVisc(p.z - pos[j].z, smoothingLength, visConst);
-	//}
-
 	for(int index = 0; index < counter[i]; index++)
 	{
 		int j = neighbour[i * 50 + index];
 	//fpressure calculation
 	f_pressure += (pressure[i] + pressure[j])/density[j] * pVarSpiky(smoothingLength, p, pos[j]);
+	
+	//fviscosity calculation
 	f_viscosity +=  (vel[j] - vel[i])/density[j] * pVarVisc(smoothingLength,p, pos[j]);
 	}
 
-	//printf("distance(p, pos[10]) = %f \n",  pow(smoothingLength - distance(p, pos[10]),2));
-	//printf("test[i]= %f \n", mass[10] * ((pressure[i] + pressure[10])/density[10]) * (p - pos[10])/distance(p, pos[10]) * pow(smoothingLength - distance(p, pos[10]),2));
-	//printf("wSpikyDerivative [%d] -> %f:\n",i, wSpiky(distance(p.xyz, pos[neighbour[i*1000+1]].xyz), smoothingLength, spiky));
-	//printf("wViscosityDerivative [%d] -> %f:\n",i, wVisc(distance(p.xyz, pos[neighbour[i*1000+1]].xyz), smoothingLength, visConst));
-
 	f_pressure *= -1.0f  * 1/2 * mass[i] * spiky ;
-	//printf("(p - pos[10])/distance(p, pos[10]) = %f \n", (p - pos[10])/distance(p, pos[10])); //0.0003
-	//printf("(pressure[%d] + pressure[10])/density[10]) = %f \n", i, ((pressure[i] + pressure[10])/density[10]));
-	//printf("fpressure[%d] : x=%f,y=%f,z=%f \n", i, f_pressure.x, f_pressure.y, f_pressure.z) ;
-
+	
 	f_viscosity *=  viscosityConst * visConst * mass[i];
 	
-	//printf("fviscosity[%d] : x=%f,y=%f,z=%f \n", i, f_viscosity.x, f_viscosity.y, f_viscosity.z) ;
 	forceIntern[i] = f_pressure +  f_viscosity;
 	forceIntern[i] /= density[i];
-	
-	//forceIntern[i] = f_viscosity;
-	// printf("forceIntern[%d] : x=%f,y=%f,z=%f \n", i, forceIntern[i].x, forceIntern[i].y, forceIntern[i].z) ;
 }
 
 __kernel void integration(__global float4* pos,  __global float4* vel, __global float4* pos_gen, __global float4* vel_gen, __global float* life, __global float* density,__global float* mass, __global float4* forceIntern, float rho0, float dt)
@@ -148,10 +115,8 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
         life[i] = 1.0;    
     }	
 
-	
-	
-
 	float b = 1.50;
+
 	//float gravityForce = -9.81f * mass[i];
 	float gravityForce = b * (density[i] - rho0) * -9.81f * mass[i];
 
