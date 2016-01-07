@@ -89,19 +89,20 @@ int main(void) {
 		//     type 2 (from chimney)
 		//b = 50, life -= 0,15
 	
-		/*	 x = rand_float(-0.125,0.125);
+		 x = rand_float(-0.125,0.125);
 		 z = rand_float(-0.125,0.125);
-		 y = rand_float(0.125,0.25);
+		y = rand_float(0.125,0.25);
 
-		 rand_vel = rand_float(0.3,2.5);
-		vel[i] = glm::vec4(0,rand_vel,0,0);*/
+		rand_vel = rand_float(0.3,2.5);
+		float rand_xz = rand_float(-0.2,0.2);
+		vel[i] = glm::vec4(rand_xz,rand_vel,rand_xz,0);
 		
 		
 		//####################################
 		//	  type 3 two sources (chimney)
 		//b = 50, life -= 0,25
 
-		if(i % 2 == 0)
+	/*	if(i % 2 == 0)
 		{
 		 x = rand_float(-0.125,0.125);
 		 z = rand_float(-0.125,0.125);
@@ -119,17 +120,17 @@ int main(void) {
 		 rand_vel = rand_float(1.5,2.5);
 		 vel[i] = glm::vec4(0,-rand_vel,0,0);
 		}
-
+*/
 		//####################################
 		//     type 4 two sources (side)
 		// buoyancy 1.5 ? , life -0.25
-		/*if(i % 2 == 0)
+	/*	if(i % 2 == 0)
 		{
 		 x = rand_float(-0.9,-0.75);
 		 z = rand_float(-0.25,0.25);
 		 y = rand_float(-0.40,-0.10);
 		 
-		 float rand_z = rand_float(0.0,0.3);
+		 float rand_z = rand_float(-0.2,0.2);
 		 rand_vel = rand_float(0.7,3.5);
 		 vel[i] = glm::vec4(1.5*rand_vel,0.5*rand_vel,rand_z,0);
 		}

@@ -335,7 +335,7 @@ void CLsph::runKernel(int kernelnumber)
 	//0 == Neighbours
 	if(kernelnumber == 0)
 	{
-		m_err = m_queue.enqueueNDRangeKernel(m_NeighboursKernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
+		m_err = m_queue.enqueueNDRangeKernel(m_NeighboursKernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event); // zweites Nullrange für local
 	}
 	//1 == Density
 	if(kernelnumber == 1)

@@ -87,7 +87,6 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
 	float4 f_pressure = 0.0f;
 	float4 f_viscosity = 0.0f;
 
-	//printf("velodistance[%d] = %f \n", i, distance(vel[neighbour[i*1000]], vel[i]));
 	//force calculation
 
 
@@ -152,7 +151,7 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 	
 	
 
-	float b = 50;
+	float b = 1.50;
 	//float gravityForce = -9.81f * mass[i];
 	float gravityForce = b * (density[i] - rho0) * -9.81f * mass[i];
 
