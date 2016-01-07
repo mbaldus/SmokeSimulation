@@ -62,9 +62,10 @@ int main(void) {
 	std::vector<glm::vec4> vel(num);
 	std::vector<float> life(num);
 	std::vector<float> rndmSprite(num);
+	std::vector<float> isAlive(num);
+	std::vector<int> aliveHelper(num);
 	std::vector<int> neighbours(num*50);
 	std::vector<int> counter(num); //not num (count of neighbours)
-	std::vector<int> isAlive(num);
 	std::vector<float> density(num);
 	std::vector<float> pressure(num);
 	std::vector<float> viscosity(num);
@@ -73,7 +74,6 @@ int main(void) {
 	
 	for (int i = 0; i <num; i++)
 	{
-
 		float x,y,z, life_r,rand_vel;
 		//####################################
 		//	   type 1 (from side)
@@ -155,10 +155,18 @@ int main(void) {
 		mass[i] = 0.000025f;
 		forceIntern[i] = glm::vec4(0,0,0,0);
 		counter[i]=0;
-
+	
+		//set x particles alive at the beginning to avoid explosions
+		isAlive[i] = 0.0;
+		aliveHelper[i] = 0;
+		if(i < 50)
+		{
+		isAlive[i] = 1.0;
+		aliveHelper[i] = 1;
+		}
 	}
 	
-	sph->loadData(pos,vel,life,rndmSprite, neighbours,counter,isAlive,density,pressure,viscosity,mass,forceIntern); 
+	sph->loadData(pos,vel,life,rndmSprite,isAlive,aliveHelper, neighbours,counter,density,pressure,viscosity,mass,forceIntern); 
 	sph->genNeighboursKernel();
 	sph->genDensityKernel();
 	sph->genIntegrationKernel();
@@ -184,21 +192,22 @@ int main(void) {
 	
 	//###################################################################
 	int delay = 0;
-	int i = 0;
+	int framecount = 0;
+	int frameoffset= 10 ;
+
+	printf("Particles alive: \n", framecount);
+
 	std::function<void(double)> loop = 
 		[&sph,
 		&shaderprogram,
 		&trackball, &sphere,
 		&model,
-		&view, &delay, &i,
-		&neighbours,
+		&view, &delay, &framecount, &frameoffset,
+		&neighbours, &aliveHelper,
 		&window](double deltatime)
 	{
 		glEnable(GL_DEPTH_TEST);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		/*glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.005);*/
 
 		glEnable(GL_BLEND);
 		glDepthMask(GL_FALSE);
@@ -207,14 +216,25 @@ int main(void) {
 		shaderprogram->use();
 		trackball.update(window,view);
 		shaderprogram->update("view", view);
-
-		if (delay % 60 == 0)
+		
+		if (framecount < NUM_PARTICLES)
 		{
-			printf("seconds = %d \n", i);
-			i++;
-			delay = 0;
+			for (int j = 0; j < frameoffset; j++)
+			{
+				if(framecount*frameoffset+j<NUM_PARTICLES)
+				aliveHelper[framecount*frameoffset+j] = 1 ;
+			}
+			printf("\r %d", framecount*frameoffset);
+		}
+
+		if (delay % 2 == 0)
+		{
+		sph->updateData(aliveHelper);
+		delay = 0;
+		framecount++;
 		}
 		delay++;
+		
 		
 		sph->runKernel(NEIGHBOURS);  //0 == Nachbarschaftssuche
 		sph->runKernel(DENSITY);	 //1 == Dichte und Druckberechnung

@@ -39,7 +39,7 @@ class CLsph
 		cl::Buffer cl_mass;
 		cl::Buffer cl_forceIntern;
 		cl::Buffer cl_rdnmSprite;
-		cl::Buffer cl_isAlive;
+		cl::Buffer cl_isAliveHelper;
 		//cl::Buffer cl_life;
 
 		float dt;
@@ -53,6 +53,7 @@ class CLsph
 		int life_vbo; //life VBO
 		int dens_vbo; //density VBO
 		int rndm_vbo; //rndm Sprite
+		int alive_vbo; //particle vision
 		int m_num; //number of particles
 
 		size_t array_size; //the size of our arrays num * sizeof(Vec4)
@@ -76,14 +77,17 @@ class CLsph
 					  std::vector<glm::vec4> vel,
 					  std::vector<float> life,
 					  std::vector<float> rndm,
+					  std::vector<float> isAlive,
+					  std::vector<int> aliveHelper,
 					  std::vector<int> neighbours,
 					  std::vector<int> counter,
-					  std::vector<int> isAlive,
 					  std::vector<float> density, 
 					  std::vector<float> pressure, 
 					  std::vector<float> viscosity,
 					  std::vector<float> mass,
 					  std::vector<glm::vec4> forceIntern);
+
+		void updateData(std::vector<int> aliveHelper);
 
 		//setup data for the kernela
 		void genNeighboursKernel();

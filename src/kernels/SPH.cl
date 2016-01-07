@@ -23,9 +23,12 @@ float pVarVisc(float h, float4 p, float4 pn)
 }
 
 
-__kernel void neighbours(__global float4* pos, __global int* neighbour,__global int* counter, float smoothingLength, __global float* mass)
+__kernel void neighbours(__global float4* pos, __global int* neighbour,__global int* counter, float smoothingLength, __global float* mass,  __global float* isAlive)
 {
 	unsigned int i = get_global_id(0);
+	if (isAlive[i] > 0.5)
+	{
+
 	float4 p = pos[i];
 	
 	counter[i] = 0;
@@ -33,7 +36,7 @@ __kernel void neighbours(__global float4* pos, __global int* neighbour,__global 
 	//array size is 50(n) times bigger than pos[]
 	for (int index = 0; index < get_global_size(0); index++)
 	{
-		if (distance(p.xyz, pos[index].xyz) <= smoothingLength) // < smoothingLength
+		if (distance(p.xyz, pos[index].xyz) <= smoothingLength && isAlive[index] == 1) // < smoothingLength
 		{
 			neighbour[i*50+counter[i]] = index;
 			counter[i]++;
@@ -43,12 +46,16 @@ __kernel void neighbours(__global float4* pos, __global int* neighbour,__global 
 		if (counter[i] >= 49)
 			break;
 	}
+	}
 }
 
 __kernel void densityCalc(__global float4* pos, __global int* neighbour, __global int* counter, __global float* density, __global float* pressure, 
-						  __global float* mass, float smoothingLength, float poly6, float rho0)
+						  __global float* mass, float smoothingLength, float poly6, float rho0, __global float* isAlive)
 {
 	unsigned int i = get_global_id(0);
+
+	if (isAlive[i] > 0.5)
+	{
 
 	float4 p = pos[i];
 	float rho = 0;
@@ -66,13 +73,17 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 	pressure_new = k * (rho - rho0); //p = k * (rho-rho0)(k = stoffspezifische Konstante (Wasser 999kg/m³)) 
 
 	pressure[i] = pressure_new;
+
+	}
 }
 
 __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neighbour,__global int* counter, __global float* density, __global float* pressure, 
-				  __global float* viscosity, __global float* mass, __global float4* forceIntern, float smoothingLength, float spiky, float visConst)
+				  __global float* viscosity, __global float* mass, __global float4* forceIntern, float smoothingLength, float spiky, float visConst, __global float* isAlive)
 {
     unsigned int i = get_global_id(0);
 
+	if (isAlive[i] > 0.5)
+	{
 	float4 p = pos[i];
 	float viscosityConst = 0.0000005; //je größer desto mehr zusammenhalt
 	
@@ -96,18 +107,26 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
 	
 	forceIntern[i] = f_pressure +  f_viscosity;
 	forceIntern[i] /= density[i];
+	}
 }
 
-__kernel void integration(__global float4* pos,  __global float4* vel, __global float4* pos_gen, __global float4* vel_gen, __global float* life, __global float* density,__global float* mass, __global float4* forceIntern, float rho0, float dt)
+__kernel void integration(__global float4* pos,  __global float4* vel, __global float4* pos_gen, __global float4* vel_gen, __global float* life, __global float* density,
+						  __global float* mass, __global float4* forceIntern, float rho0, float dt, __global float* isAlive, __global int* aliveHelper)
 {
     unsigned int i = get_global_id(0);
+
+	if(aliveHelper[i] == 1)
+		isAlive[i] = 1.0;
+
+	if (isAlive[i] > 0.5)
+	{
 
 	float4 p_old = pos[i];
 	float4 v_old = vel[i];
 	float4 p_new = p_old;
 	float4 v_new = v_old;
 
-	life[i] -= 0.25*dt;
+	life[i] -= 0.15*dt;
 	if(life[i] <= 0)
     {
         p_old = pos_gen[i];
@@ -115,7 +134,7 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
         life[i] = 1.0;    
     }	
 
-	float b = 1.50;
+	float b = 50;
 
 	//float gravityForce = -9.81f * mass[i];
 	float gravityForce = b * (density[i] - rho0) * -9.81f * mass[i];
@@ -169,6 +188,8 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
     //update the arrays with newly computed values
     pos[i].xyz = p_new.xyz;
     vel[i].xyz = v_new.xyz;
+
+	}
 }
 
 

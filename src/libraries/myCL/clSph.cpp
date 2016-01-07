@@ -15,6 +15,7 @@ CLsph::CLsph(float delta, float radius, float r0)
 	spiky = -45/(PI*pow(smoothingLength,6));
 	visConst = 45/(PI*pow(smoothingLength,6));
 
+
 	printf("Constants: \n dt = %f \n smoothingLength = %f \n poly6 = %f \n spiky = %f \n visConst = %f \n", 
 		   dt, smoothingLength, poly6, spiky, visConst);
 
@@ -109,7 +110,7 @@ void CLsph::loadProgram(std::string kernel_source)
 
 }
 
-void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<float> life, std::vector<float> rndm, std::vector<int> neighbours,std::vector<int> counter,std::vector<int> isAlive, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass,std::vector<glm::vec4> forceIntern)
+void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<float> life, std::vector<float> rndm,std::vector<float> isAlive, std::vector<int> isAliveHelper, std::vector<int> neighbours,std::vector<int> counter, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass,std::vector<glm::vec4> forceIntern)
 {
 	printf("LOAD DATA \n");
 	//store number of particles and the size of bytes of our arrays
@@ -124,6 +125,7 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	life_vbo = createVBO(&life[0], float_size, 1,1);
 	dens_vbo = createVBO(&density[0], float_size, 1, 2);
 	rndm_vbo = createVBO(&rndm[0], float_size, 1, 3);
+	alive_vbo = createVBO(&isAlive[0], float_size, 1,4);
 	//printf("p_vbo = %d, life_vbo = %d, rndm_vbo = %d \n" , p_vbo, life_vbo, rndm_vbo);
 
 	//make sure OpenGL is finishedn before proceeding
@@ -134,6 +136,7 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, life_vbo, &m_err));
 	cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, dens_vbo, &m_err));
 	cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, rndm_vbo, &m_err));
+	cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, alive_vbo, &m_err));
 
 	//create OpenCL only arrays
 	cl_velocities = cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
@@ -141,7 +144,7 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	cl_vel_gen =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
 	cl_neighbours = cl::Buffer(m_context, CL_MEM_READ_WRITE, extended_int_size, NULL, &m_err); 
 	cl_counter = cl::Buffer(m_context, CL_MEM_READ_WRITE, int_size, NULL, &m_err); 
-	cl_isAlive = cl::Buffer(m_context, CL_MEM_READ_WRITE, int_size, NULL, &m_err); 
+	cl_isAliveHelper = cl::Buffer(m_context, CL_MEM_READ_WRITE, int_size, NULL, &m_err); 
 	cl_pressure =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_viscosity =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_mass =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
@@ -156,13 +159,20 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	m_err = m_queue.enqueueWriteBuffer(cl_vel_gen, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_neighbours, CL_TRUE,0, extended_int_size, &neighbours[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_counter, CL_TRUE,0, int_size, &counter[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_isAlive, CL_TRUE,0, int_size, &isAlive[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_isAliveHelper, CL_TRUE,0, int_size, &isAliveHelper[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_pressure, CL_TRUE,0, float_size, &pressure[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_viscosity, CL_TRUE,0, float_size, &viscosity[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_mass, CL_TRUE,0, float_size, &mass[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_forceIntern, CL_TRUE,0, array_size, &forceIntern[0], NULL, &m_event);
 	m_queue.finish();
 	printf("######################################################\n");
+}
+
+void CLsph::updateData(std::vector<int> aliveHelper)
+{
+	int_size = m_num * sizeof(int);
+	m_err = m_queue.enqueueWriteBuffer(cl_isAliveHelper, CL_TRUE,0, int_size, &aliveHelper[0], NULL, &m_event);
+	m_queue.finish();
 }
 
 void CLsph::genNeighboursKernel()
@@ -188,6 +198,7 @@ void CLsph::genNeighboursKernel()
 		m_err = m_NeighboursKernel.setArg(2,cl_counter);
 		m_err = m_NeighboursKernel.setArg(3,smoothingLength);
 		m_err = m_NeighboursKernel.setArg(4,cl_mass);
+		m_err = m_NeighboursKernel.setArg(5,cl_vbos[4]); //alive
 	}catch(cl::Error er)
 	{
 		printf("ERROR: %s\n", er.what(), oclErrorString(er.err()));
@@ -226,6 +237,7 @@ void CLsph::genDensityKernel()
 		m_err = m_DensityKernel.setArg(6,smoothingLength);
 		m_err = m_DensityKernel.setArg(7,poly6);
 		m_err = m_DensityKernel.setArg(8,rho0);
+		m_err = m_DensityKernel.setArg(9,cl_vbos[4]); //alive
 
 	}catch(cl::Error er)
 	{
@@ -268,6 +280,7 @@ void CLsph::genSPHKernel()
 		m_err = m_SphKernel.setArg(9,smoothingLength);
 		m_err = m_SphKernel.setArg(10,spiky);
 		m_err = m_SphKernel.setArg(11,visConst);
+		m_err = m_SphKernel.setArg(12,cl_vbos[4]); //alive
 
 	}catch(cl::Error er)
 	{
@@ -308,7 +321,8 @@ void CLsph::genIntegrationKernel()
 		m_err = m_IntegrationKernel.setArg(7,cl_forceIntern);
 		m_err = m_IntegrationKernel.setArg(8,rho0);
 		m_err = m_IntegrationKernel.setArg(9,dt);
-
+		m_err = m_IntegrationKernel.setArg(10,cl_vbos[4]); //alive
+		m_err = m_IntegrationKernel.setArg(11,cl_isAliveHelper); 
 
 	}catch(cl::Error er)
 	{
@@ -329,7 +343,7 @@ void CLsph::runKernel(int kernelnumber)
 	glFinish();
 
 	//map OpenGL buffer object for writing from OpenCL
-	//this passes in the vector of VBO buffer objects (position and color)
+	//this passes in the vector of VBO buffer objects
 	m_err = m_queue.enqueueAcquireGLObjects(&cl_vbos, NULL, &m_event);
 	m_queue.finish();
 
