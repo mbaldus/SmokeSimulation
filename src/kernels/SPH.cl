@@ -126,7 +126,7 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 	float4 p_new = p_old;
 	float4 v_new = v_old;
 
-	life[i] -= 0.15*dt;
+	life[i] -= 0.25*dt;
 	if(life[i] <= 0)
     {
         p_old = pos_gen[i];
@@ -134,7 +134,7 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
         life[i] = 1.0;    
     }	
 
-	float b = 50;
+	float b = 25;
 
 	//float gravityForce = -9.81f * mass[i];
 	float gravityForce = b * (density[i] - rho0) * -9.81f * mass[i];

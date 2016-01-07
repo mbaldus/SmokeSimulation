@@ -74,7 +74,8 @@ int main(void) {
 	
 	for (int i = 0; i <num; i++)
 	{
-		float x,y,z, life_r,rand_vel;
+		float x,y,z;
+		float rand_x,rand_y,rand_z;
 		//####################################
 		//	   type 1 (from side)
 		//b = 1.5 , life -= 0.25
@@ -90,38 +91,43 @@ int main(void) {
 		//     type 2 (from chimney)
 		//b = 50, life -= 0,15
 	
-		 x = rand_float(-0.125,0.125);
+		/* x = rand_float(-0.125,0.125);
 		 z = rand_float(-0.125,0.125);
 		y = rand_float(0.125,0.25);
 
 		rand_vel = rand_float(0.3,2.5);
 		float rand_xz = rand_float(-0.2,0.2);
-		vel[i] = glm::vec4(rand_xz,rand_vel,rand_xz,0);
+		vel[i] = glm::vec4(rand_xz,rand_vel,rand_xz,0);*/
 		
 		
 		//####################################
 		//	  type 3 two sources (chimney)
-		//b = 50, life -= 0,25
+		//b = 25, life -= 0,25
 
-	/*	if(i % 2 == 0)
+		if(i % 2 == 0)
 		{
 		 x = rand_float(-0.125,0.125);
 		 z = rand_float(-0.125,0.125);
 		 y = rand_float(-0.49,-0.25);
 
-		 rand_vel = rand_float(1.0,2.75);
-		 vel[i] = glm::vec4(0,rand_vel,0,0);
+		 rand_x = rand_float(-0.2,0.2);
+		 rand_y = rand_float(1.0,1.75);
+		 rand_z = rand_float(-0.2,0.2);
+
+		 vel[i] = glm::vec4(rand_x,rand_y,rand_z,0);
 		}
 		else if (i % 2 == 1)
 		{
 		 x = rand_float(-0.125,0.125);
 		 z = rand_float(-0.125,0.125);
 		 y = rand_float(1.99,1.75);
-
-		 rand_vel = rand_float(1.5,2.5);
-		 vel[i] = glm::vec4(0,-rand_vel,0,0);
+		
+		 rand_x = rand_float(-0.2,0.2);
+		 rand_y = rand_float(1.5,3.5);
+		 rand_z = rand_float(-0.2,0.2);
+		 vel[i] = glm::vec4(rand_x,-rand_y,rand_z,0);
 		}
-*/
+
 		//####################################
 		//     type 4 two sources (side)
 		// buoyancy 1.5 ? , life -0.25
