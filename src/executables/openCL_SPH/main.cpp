@@ -64,6 +64,7 @@ int main(void) {
 	std::vector<float> rndmSprite(num);
 	std::vector<int> neighbours(num*50);
 	std::vector<int> counter(num); //not num (count of neighbours)
+	std::vector<int> isAlive(num);
 	std::vector<float> density(num);
 	std::vector<float> pressure(num);
 	std::vector<float> viscosity(num);
@@ -157,7 +158,7 @@ int main(void) {
 
 	}
 	
-	sph->loadData(pos,vel,life,rndmSprite, neighbours,counter,density,pressure,viscosity,mass,forceIntern); 
+	sph->loadData(pos,vel,life,rndmSprite, neighbours,counter,isAlive,density,pressure,viscosity,mass,forceIntern); 
 	sph->genNeighboursKernel();
 	sph->genDensityKernel();
 	sph->genIntegrationKernel();

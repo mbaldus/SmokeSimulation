@@ -39,6 +39,7 @@ class CLsph
 		cl::Buffer cl_mass;
 		cl::Buffer cl_forceIntern;
 		cl::Buffer cl_rdnmSprite;
+		cl::Buffer cl_isAlive;
 		//cl::Buffer cl_life;
 
 		float dt;
@@ -52,11 +53,12 @@ class CLsph
 		int life_vbo; //life VBO
 		int dens_vbo; //density VBO
 		int rndm_vbo; //rndm Sprite
-		int m_num; //nuber of particles
+		int m_num; //number of particles
+
 		size_t array_size; //the size of our arrays num * sizeof(Vec4)
-		size_t int_size; //size of particles amount * count of saved neighbours per particle
 		size_t float_size;
-		size_t normal_int_size; //(m_num)
+		size_t int_size; //(m_num)
+		size_t extended_int_size; //size of particles amount * count of saved neighbours per particle
 
 		//default constructor initializes OpenCL Context and chooses platform and device
 		CLsph(float delta, float radiush, float r0);
@@ -76,6 +78,7 @@ class CLsph
 					  std::vector<float> rndm,
 					  std::vector<int> neighbours,
 					  std::vector<int> counter,
+					  std::vector<int> isAlive,
 					  std::vector<float> density, 
 					  std::vector<float> pressure, 
 					  std::vector<float> viscosity,

@@ -109,14 +109,14 @@ void CLsph::loadProgram(std::string kernel_source)
 
 }
 
-void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<float> life, std::vector<float> rndm, std::vector<int> neighbours,std::vector<int> counter, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass,std::vector<glm::vec4> forceIntern)
+void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<float> life, std::vector<float> rndm, std::vector<int> neighbours,std::vector<int> counter,std::vector<int> isAlive, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass,std::vector<glm::vec4> forceIntern)
 {
 	printf("LOAD DATA \n");
 	//store number of particles and the size of bytes of our arrays
 	m_num = pos.size();
 	array_size = m_num * sizeof(glm::vec4);
-	int_size = m_num * sizeof(int) * 50;
-	normal_int_size = m_num * sizeof(int);
+	extended_int_size = m_num * sizeof(int) * 50;
+	int_size = m_num * sizeof(int);
 	float_size = m_num * sizeof(float);
 	
 	//create VBO's (util.cpp)
@@ -139,8 +139,9 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	cl_velocities = cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
 	cl_pos_gen =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
 	cl_vel_gen =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
-	cl_neighbours = cl::Buffer(m_context, CL_MEM_READ_WRITE, int_size, NULL, &m_err); 
-	cl_counter = cl::Buffer(m_context, CL_MEM_READ_WRITE, normal_int_size, NULL, &m_err); 
+	cl_neighbours = cl::Buffer(m_context, CL_MEM_READ_WRITE, extended_int_size, NULL, &m_err); 
+	cl_counter = cl::Buffer(m_context, CL_MEM_READ_WRITE, int_size, NULL, &m_err); 
+	cl_isAlive = cl::Buffer(m_context, CL_MEM_READ_WRITE, int_size, NULL, &m_err); 
 	cl_pressure =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_viscosity =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_mass =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
@@ -153,8 +154,9 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	m_err = m_queue.enqueueWriteBuffer(cl_velocities, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_pos_gen, CL_TRUE,0, array_size, &pos[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_vel_gen, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_neighbours, CL_TRUE,0, int_size, &neighbours[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_counter, CL_TRUE,0, normal_int_size, &counter[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_neighbours, CL_TRUE,0, extended_int_size, &neighbours[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_counter, CL_TRUE,0, int_size, &counter[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_isAlive, CL_TRUE,0, int_size, &isAlive[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_pressure, CL_TRUE,0, float_size, &pressure[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_viscosity, CL_TRUE,0, float_size, &viscosity[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_mass, CL_TRUE,0, float_size, &mass[0], NULL, &m_event);
