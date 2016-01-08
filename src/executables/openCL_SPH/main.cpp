@@ -56,6 +56,8 @@ int main(void) {
 	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPH.cl");
     sph->loadProgram(kernel_source);
 
+	//###################################################################
+	//						 INITILIZATION
 	//initialize our particle system with positions, velocities and color
 	int num = NUM_PARTICLES;
 	std::vector<glm::vec4> pos(num);
@@ -75,102 +77,117 @@ int main(void) {
 	float x,y,z;
 	float rand_x,rand_y,rand_z;
 
-	int mode = 2;
+	int mode = 4;
 
 	switch (mode)
 	{
-	case 1:
+	case 1: //side
+		for (int i = 0; i <num; i++)
+		{
+			x = rand_float(-0.75,-0.5);
+			z = rand_float(-0.125,0.125);
+			y = rand_float(0.25,0.5);
+			pos[i] = glm::vec4(x,y,z,1.0f);
 
+			rand_x = rand_float(0.5,3);
+			rand_y = rand_float(0.25,1.5);
+			vel[i] = glm::vec4(rand_x,rand_y,0,0);
+		
+			sph->setBuoyancy(1.5f);
+			sph->setLifeDeduction(0.25);
+		}
+		break;
+
+	case 2: //chimney
+		for (int i = 0; i <num; i++)
+		{
+			x = rand_float(-0.125,0.125);
+			z = rand_float(-0.125,0.125);
+			y = rand_float(0.125,0.25);
+			pos[i] = glm::vec4(x,y,z,1.0f);
+
+			rand_x = rand_float(-0.2,0.2);
+			rand_y = rand_float(0.3,2.5);
+			rand_z = rand_float(-0.2,0.2);
+			vel[i] = glm::vec4(rand_x,rand_y,rand_z,0);
+		
+			sph->setBuoyancy(50.0f);
+			sph->setLifeDeduction(0.15);
+		}
+		break;
+
+	case 3: //two sources (chimney)
+		for (int i = 0; i <num; i++)
+		{
+
+			if(i % 2 == 0)
+			{
+			x = rand_float(-0.125,0.125);
+			z = rand_float(-0.125,0.125);
+			y = rand_float(-0.49,-0.25);
+			pos[i] = glm::vec4(x,y,z,1.0f);
+
+			rand_x = rand_float(-0.2,0.2);
+			rand_y = rand_float(1.0,1.75);
+			rand_z = rand_float(-0.2,0.2);
+
+			vel[i] = glm::vec4(rand_x,rand_y,rand_z,0);
+			}
+			else if (i % 2 == 1)
+			{
+			x = rand_float(-0.125,0.125);
+			z = rand_float(-0.125,0.125);
+			y = rand_float(1.99,1.75);
+			pos[i] = glm::vec4(x,y,z,1.0f);
+
+			rand_x = rand_float(-0.2,0.2);
+			rand_y = rand_float(1.5,3.5);
+			rand_z = rand_float(-0.2,0.2);
+			vel[i] = glm::vec4(rand_x,-rand_y,rand_z,0);
+
+			sph->setBuoyancy(25.0f);
+			sph->setLifeDeduction(0.25);
+			}
+		}
+		break;
+	
+	case 4: // two sources (side)
+		for (int i = 0; i <num; i++)
+		{
+			if(i % 2 == 0)
+			{
+			x = rand_float(-0.9,-0.75);
+			z = rand_float(-0.25,0.25);
+			y = rand_float(-0.40,-0.10);
+			pos[i] = glm::vec4(x,y,z,1.0f);
+		 
+			rand_x = rand_float(1.0,4.5);
+			rand_y = rand_float(0.35,1.75);
+			rand_z = rand_float(-0.2,0.2);
+			
+			vel[i] = glm::vec4(rand_x,rand_y,rand_z,0);
+			}
+			else if (i % 2 == 1)
+			{
+			x = rand_float(0.70,0.9);
+			z = rand_float(-0.25,0.25);
+			y = rand_float(-0.40,-0.10);
+			pos[i] = glm::vec4(x,y,z,1.0f);
+
+			rand_x = rand_float(1.1,4.5);
+			rand_y = rand_float(0.7,4.5);
+			rand_z = rand_float(0.0,0.3);
+			vel[i] = glm::vec4(-rand_x,rand_y,rand_z,0);
+		
+		    sph->setBuoyancy(1.5f);
+		    sph->setLifeDeduction(0.25);
+			}
+		}
 		break;
 	}
+
 	for (int i = 0; i <num; i++)
 	{
-		
-		//####################################
-		//	   type 1 (from side)
-	
-		/*	 x = rand_float(-0.75,-0.5);
-		 z = rand_float(-0.125,0.125);
-		 y = rand_float(0.25,0.5);
-		
-		 rand_vel = rand_float(0.5,3);
-		vel[i] = glm::vec4(rand_vel,0.5*rand_vel,0,0);
-		
-		sph->setBuoyancy(1.5f);
-		sph->setLifeDeduction(0.25);
-		*/
-
-		//####################################
-		//     type 2 (from chimney)
-	
-		x = rand_float(-0.125,0.125);
-		z = rand_float(-0.125,0.125);
-		y = rand_float(0.125,0.25);
-
-		float rand_vel = rand_float(0.3,2.5);
-		float rand_xz = rand_float(-0.2,0.2);
-		vel[i] = glm::vec4(rand_xz,rand_vel,rand_xz,0);
-		
-		sph->setBuoyancy(50.0f);
-		sph->setLifeDeduction(0.15);
-		
-		//####################################
-		//	  type 3 two sources (chimney)
-
-		/*if(i % 2 == 0)
-		{
-		 x = rand_float(-0.125,0.125);
-		 z = rand_float(-0.125,0.125);
-		 y = rand_float(-0.49,-0.25);
-
-		 rand_x = rand_float(-0.2,0.2);
-		 rand_y = rand_float(1.0,1.75);
-		 rand_z = rand_float(-0.2,0.2);
-
-		 vel[i] = glm::vec4(rand_x,rand_y,rand_z,0);
-		}
-		else if (i % 2 == 1)
-		{
-		 x = rand_float(-0.125,0.125);
-		 z = rand_float(-0.125,0.125);
-		 y = rand_float(1.99,1.75);
-		
-		 rand_x = rand_float(-0.2,0.2);
-		 rand_y = rand_float(1.5,3.5);
-		 rand_z = rand_float(-0.2,0.2);
-		 vel[i] = glm::vec4(rand_x,-rand_y,rand_z,0);
-
-		 sph->setBuoyancy(25.0f);
-		 sph->setLifeDeduction(0.25);
-		}*/
-
-		//####################################
-		//     type 4 two sources (side)
-	/*	if(i % 2 == 0)
-		{
-		 x = rand_float(-0.9,-0.75);
-		 z = rand_float(-0.25,0.25);
-		 y = rand_float(-0.40,-0.10);
-		 
-		 float rand_z = rand_float(-0.2,0.2);
-		float rand_vel = rand_float(0.7,3.5);
-		 vel[i] = glm::vec4(1.5*rand_vel,0.5*rand_vel,rand_z,0);
-		}
-		else if (i % 2 == 1)
-		{
-		 x = rand_float(0.70,0.9);
-		 z = rand_float(-0.25,0.25);
-		 y = rand_float(-0.40,-0.10);
-		 
-		 float rand_z = rand_float(0.0,0.3);
-		float rand_vel = rand_float(0.7,4.5);
-		 vel[i] = glm::vec4(-1.5*rand_vel,1*rand_vel,rand_z,0);
-		
-		 sph->setBuoyancy(1.5f);
-		 sph->setLifeDeduction(0.25);
-		}
-*/
-		pos[i] = glm::vec4(x,y,z,1.0f);
 		life[i] = rand_float(0.0f,1.0f);
 		rndmSprite[i] = float(i % 10);
 		density[i] = 0.0f;
