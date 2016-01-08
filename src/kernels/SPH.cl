@@ -111,7 +111,7 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
 }
 
 __kernel void integration(__global float4* pos,  __global float4* vel, __global float4* pos_gen, __global float4* vel_gen, __global float* life, __global float* density,
-						  __global float* mass, __global float4* forceIntern, float rho0, float dt, __global float* isAlive, __global int* aliveHelper)
+						  __global float* mass, __global float4* forceIntern, float rho0, float dt, __global float* isAlive, __global int* aliveHelper, float buoyancy, float lifeDeduction)
 {
     unsigned int i = get_global_id(0);
 
@@ -126,7 +126,7 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 	float4 p_new = p_old;
 	float4 v_new = v_old;
 
-	life[i] -= 0.25*dt;
+	life[i] -= lifeDeduction*dt;
 	if(life[i] <= 0)
     {
         p_old = pos_gen[i];
@@ -134,10 +134,10 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
         life[i] = 1.0;    
     }	
 
-	float b = 25;
+	float b = 50;
 
 	//float gravityForce = -9.81f * mass[i];
-	float gravityForce = b * (density[i] - rho0) * -9.81f * mass[i];
+	float gravityForce = buoyancy * (density[i] - rho0) * -9.81f * mass[i];
 
 	//apply intern forces and extern forces
 	v_new.x = v_old.x + (forceIntern[i].x/mass[i]) * dt;
@@ -149,6 +149,7 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 
 //	float bDamp = -1.2;
 	float bDamp = -0.9;
+	
 	//boundarys
 	if(p_old.y < -0.5)
 	{
@@ -182,7 +183,7 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 		p_new.z = -1.f;
 	}
 
-	//damping
+	//global damping
 	v_new.xyz *= 0.99999f;
 
     //update the arrays with newly computed values

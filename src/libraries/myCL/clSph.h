@@ -48,6 +48,8 @@ class CLsph
 		float visConst;
 		float smoothingLength;
 		float rho0;
+		float buoyancy;
+		float lifeDeduction;
 		
 		int p_vbo; //position VBO
 		int life_vbo; //life VBO
@@ -100,7 +102,12 @@ class CLsph
 
 		void render();
 
+		//setter
+		void setBuoyancy(float f);
+		void setLifeDeduction(float f);
+
 	private: 
+
 
 		//handles for creating an opencl context
 		

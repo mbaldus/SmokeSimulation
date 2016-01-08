@@ -15,6 +15,8 @@ CLsph::CLsph(float delta, float radius, float r0)
 	spiky = -45/(PI*pow(smoothingLength,6));
 	visConst = 45/(PI*pow(smoothingLength,6));
 
+	buoyancy = 3.0f;
+	lifeDeduction = 0.25;
 
 	printf("Constants: \n dt = %f \n smoothingLength = %f \n poly6 = %f \n spiky = %f \n visConst = %f \n", 
 		   dt, smoothingLength, poly6, spiky, visConst);
@@ -175,6 +177,8 @@ void CLsph::updateData(std::vector<int> aliveHelper)
 	m_queue.finish();
 }
 
+
+
 void CLsph::genNeighboursKernel()
 {
 	printf("genNeighboursKernel\n");
@@ -323,6 +327,8 @@ void CLsph::genIntegrationKernel()
 		m_err = m_IntegrationKernel.setArg(9,dt);
 		m_err = m_IntegrationKernel.setArg(10,cl_vbos[4]); //alive
 		m_err = m_IntegrationKernel.setArg(11,cl_isAliveHelper); 
+		m_err = m_IntegrationKernel.setArg(12,buoyancy);
+		m_err = m_IntegrationKernel.setArg(13,lifeDeduction);
 
 	}catch(cl::Error er)
 	{
@@ -433,3 +439,12 @@ void CLsph::render()
 	glDrawArrays(GL_POINTS, 0, m_num);
 }
 
+void CLsph::setBuoyancy(float b)
+{
+	buoyancy = b;
+}
+
+void CLsph::setLifeDeduction(float f)
+{
+	lifeDeduction = f;
+}
