@@ -4,13 +4,7 @@
 
 #define NUM_PARTICLES 10000
 
-#define NEIGHBOURS 0
-#define DENSITY 1
-#define SPH 2
-#define INTEGRATION 3
-
-
-#include <myCL/clSph.h>
+#include <myCL/Sph.h>
 #include <Util/util.h>
 #include <GL/GLTools.h>
 #include <GL/CVK_Trackball.h>
@@ -51,11 +45,8 @@ int main(void) {
 	Sphere* sphere = new Sphere(0.25);
 
 	int num = NUM_PARTICLES;
-	CLsph* sph = new CLsph(0.00375f,0.05f,0.59,num);
+	SPH* sph = new SPH(0.00375f,0.05f,0.59,num);
     
-	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPH.cl");
-    sph->loadProgram(kernel_source);
-
 	//###################################################################
 	//						SPH INITILIZATION
 	  /*
@@ -66,10 +57,6 @@ int main(void) {
 	  */
 	sph->init(1);
 	sph->loadData();
-	sph->genNeighboursKernel();
-	sph->genDensityKernel();
-	sph->genIntegrationKernel();
-	sph->genSPHKernel();
 
 	//###################################################################
 	//				GL ShaderProgram and Camera Settings
@@ -133,16 +120,16 @@ int main(void) {
 		
 		if (delay % 2 == 0)
 		{
-		sph->updateData(sph->aliveHelper);
+		//sph->updateData(sph->aliveHelper);
 		delay = 0;
 		framecount++;
 		}
 		delay++;
 		
-		sph->runKernel(NEIGHBOURS);  //0 == Nachbarschaftssuche
-		sph->runKernel(DENSITY);	 //1 == Dichte und Druckberechnung
-		sph->runKernel(SPH);		 //2 == Sph
-		sph->runKernel(INTEGRATION); //3 == Integration
+		sph->neighboursearch;  
+		sph->densPressCalc; 
+		sph->sphCalc;	 
+		sph->integration; 
 
 		sph->render();
 
