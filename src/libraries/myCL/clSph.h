@@ -33,13 +33,12 @@ class CLsph
 		cl::Buffer cl_vel_gen;
 		
 		//SPH parameters and Buffers
-		//cl::Buffer cl_density;
 		cl::Buffer cl_pressure;
 		cl::Buffer cl_viscosity;
 		cl::Buffer cl_mass;
 		cl::Buffer cl_forceIntern;
 		cl::Buffer cl_rdnmSprite;
-		//cl::Buffer cl_life;
+		cl::Buffer cl_isAliveHelper;
 
 		float dt;
 		float poly6;
@@ -47,40 +46,51 @@ class CLsph
 		float visConst;
 		float smoothingLength;
 		float rho0;
+		float buoyancy;
+		float lifeDeduction;
 		
 		int p_vbo; //position VBO
 		int life_vbo; //life VBO
 		int dens_vbo; //density VBO
 		int rndm_vbo; //rndm Sprite
-		int m_num; //nuber of particles
+		int alive_vbo; //particle vision
+		int m_num; //number of particles
+
+		std::vector<glm::vec4> pos;
+		std::vector<glm::vec4> vel;
+		std::vector<float> life;
+		std::vector<float> rndmSprite;
+		std::vector<float> isAlive;
+		std::vector<int> aliveHelper;
+		std::vector<int> neighbours;
+		std::vector<int> counter;
+		std::vector<float> density;
+		std::vector<float> pressure;
+		std::vector<float> viscosity;
+		std::vector<float> mass;
+		std::vector<glm::vec4> forceIntern;
+
 		size_t array_size; //the size of our arrays num * sizeof(Vec4)
-		size_t int_size; //size of particles amount * count of saved neighbours per particle
 		size_t float_size;
-		size_t normal_int_size; //(m_num)
+		size_t int_size; //(m_num)
+		size_t extended_int_size; //size of particles amount * count of saved neighbours per particle
 
 		//default constructor initializes OpenCL Context and chooses platform and device
-		CLsph(float delta, float radiush, float r0);
+		CLsph(float delta, float radiush, float r0, int num);
 		//default deconstructor releases OpenCL objects and frees device memory
 		~CLsph();
 
 		//load OpenCL program from a file
-		//pass in the kernel source code as a string. 
-			
+		//pass in the kernel source code as a string. 	
 		void loadProgram(std::string kernel_source);
 		
 
-		//setup the data for the kernel
-		void loadData(std::vector<glm::vec4> pos, 
-					  std::vector<glm::vec4> vel,
-					  std::vector<float> life,
-					  std::vector<float> rndm,
-					  std::vector<int> neighbours,
-					  std::vector<int> counter,
-					  std::vector<float> density, 
-					  std::vector<float> pressure, 
-					  std::vector<float> viscosity,
-					  std::vector<float> mass,
-					  std::vector<glm::vec4> forceIntern);
+		//setup the data for the kernel (push data to gpu)
+		void loadData();
+		
+		//update data on the gpu
+		void updateData();
+		void updateData(std::vector<int> aliveHelper);
 
 		//setup data for the kernela
 		void genNeighboursKernel();
@@ -91,7 +101,18 @@ class CLsph
 		//execute the kernel
 		void runKernel(int kernelnumber);
 
+		//render function
 		void render();
+
+		//initialize 1 of 4 modes
+		void init(int mode=1);
+
+		//reset particles
+		void reset();
+
+		//setter
+		void setBuoyancy(float f);
+		void setLifeDeduction(float f);
 
 	private: 
 
