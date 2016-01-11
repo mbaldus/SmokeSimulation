@@ -34,6 +34,8 @@ SPH::SPH(float delta, float radius, float r0, int num)
 	viscosity.resize(m_num);
 	mass.resize(m_num);
 	forceIntern.resize(m_num);
+	m_pos_gen.resize(m_num);
+	m_vel_gen.resize(m_num);
 }
 
 SPH::~SPH()
@@ -206,19 +208,197 @@ void SPH::loadData()
 
 void SPH::neighboursearch()
 {	
+	for(int i = 0; i < m_num; i++)
+	{
+		if (isAlive[i] > 0.5)
+		{
+
+		glm::vec4 p = pos[i];
+	
+		counter[i] = 0;
+		//save neighbours of THIS particle in an array 
+		//array size is 50 times bigger than pos[]
+		for (int index = 0; index < m_num; index++)
+		{
+			if (glm::distance(p, pos[index]) <= smoothingLength && isAlive[index] == 1) // < smoothingLength
+			{
+				neighbours[i*50+counter[i]] = index;
+				counter[i]++;
+				//only saves values with distance < smoothing Lenght --> [0,smoothingLength]
+			}
+			//stop when 50(n) neighbours of i are found
+			if (counter[i] >= 49)
+			break;
+		}
+		}
+	}
 }
 
 void SPH::densPressCalc()
 {
+	for(int i = 0; i < m_num; i++)
+	{
+		if (isAlive[i] > 0.5)
+		{
+	
+		glm::vec4 p = pos[i];
+		float rho = 0;
+		float pressure_new = 0;
+		float k = 0.00125; //Gaskonstante
+
+		for(int index = 0; index < counter[i]; index++)
+		{
+			int j = neighbours[i * 50 + index];
+			rho += pVarPoly(smoothingLength, glm::distance(p ,pos[j]));
+		}
+		rho *= poly6 * mass[i];
+
+		density[i] = rho;
+		pressure_new = k * (rho - rho0); //p = k * (rho-rho0)(k = stoffspezifische Konstante (Wasser 999kg/m³)) 
+
+		pressure[i] = pressure_new;
+	}
+	}
 }
 
 void SPH::sphCalc()
 {
+	for(int i = 0; i < m_num; i++)
+	{
+		if (isAlive[i] > 0.5)
+		{
+		glm::vec4 p = pos[i];
+		float viscosityConst = 0.0000005; //je größer desto mehr zusammenhalt
+	
+		glm::vec4 f_pressure = glm::vec4(0.0,0.0,0.0,0.0f);
+		glm::vec4 f_viscosity = glm::vec4(0.0,0.0,0.0,0.0f);
+
+		//force calculation
+		for(int index = 0; index < counter[i]; index++)
+		{
+			int j = neighbours[i * 50 + index];
+			//fpressure calculation
+			f_pressure += (pressure[i] + pressure[j])/density[j] * pVarSpiky(smoothingLength, p, pos[j]);
+	
+			//fviscosity calculation
+			f_viscosity +=  (vel[j] - vel[i])/density[j] * pVarVisc(smoothingLength,p, pos[j]);
+		}
+
+		f_pressure *= -1.0f  * 1/2 * mass[i] * spiky ;
+	
+		f_viscosity *=  viscosityConst * visConst * mass[i];
+	
+		forceIntern[i] = f_pressure +  f_viscosity;
+		forceIntern[i] /= density[i];
+	}
+	}
 }
 
 void SPH::integration()
 {
+	for(int i = 0; i < m_num; i++)
+	{
+		if(aliveHelper[i] == 1)
+		isAlive[i] = 1.0;
 
+		if (isAlive[i] > 0.5)
+		{
+
+		glm::vec4 p_old = pos[i];
+		glm::vec4 v_old = vel[i];
+		glm::vec4 p_new = p_old;
+		glm::vec4 v_new = v_old;
+
+		life[i] -= lifeDeduction*dt;
+		if(life[i] <= 0)
+		  {
+		      p_old = m_pos_gen[i];
+		      v_old = m_vel_gen[i];
+		      life[i] = 1.0;    
+		  }	
+
+		float b = 50;
+
+		//float gravityForce = -9.81f * mass[i];
+		float gravityForce = buoyancy * (density[i] - rho0) * -9.81f * mass[i];
+
+		//apply intern forces and extern forces
+		v_new.x = v_old.x + (forceIntern[i].x/mass[i]) * dt;
+		v_new.y = v_old.y + ((forceIntern[i].y + gravityForce)/mass[i]) * dt;
+		v_new.z = v_old.z + (forceIntern[i].z/mass[i]) * dt;
+
+		//compute new position with computed velocity
+		//p_new.xyz = p_old.xyz + v_new.xyz * dt ;
+		p_new = p_old + v_new * dt ;
+
+	//	float bDamp = -1.2;
+		float bDamp = -0.9;
+	
+		//boundarys
+		if(p_old.y < -0.5)
+		{
+			v_new.y *= bDamp;
+			p_new.y = -0.5f;
+		}	
+	
+		if(p_old.y > 2)
+		{
+			v_new.y *= bDamp ;
+			p_new.y = 2;
+		}
+
+		if(p_old.x > 1)
+		{
+			v_new.x *= bDamp;
+			p_new.x = 1;
+		}
+
+		if(p_old.x < -1.0)
+		{
+			v_new.x *= bDamp;
+			p_new.x = -1.0f;
+		}
+
+		if(p_old.z > 1)
+		{
+			v_new.z *= bDamp;
+			p_new.z = 1;
+		}
+
+		if(p_old.z < -1)
+		{
+			v_new.z *= bDamp;
+			p_new.z = -1.f;
+		}
+
+		//global damping
+		v_new *= 0.99999f;
+
+	   //update the arrays with newly computed values
+	   //pos[i].xyz = p_new.xyz;
+	   //vel[i].xyz = v_new.xyz;
+
+		 pos[i] = p_new;
+		 vel[i] = v_new;
+		 
+		}
+
+	}
+}
+
+void SPH::updateVBOs()
+{
+	glBindBuffer(GL_ARRAY_BUFFER,p_vbo);
+	glBufferData(GL_ARRAY_BUFFER, array_size, &pos[0], GL_DYNAMIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER,life_vbo);
+	glBufferData(GL_ARRAY_BUFFER, float_size, &life[0], GL_DYNAMIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER,dens_vbo);
+	glBufferData(GL_ARRAY_BUFFER, float_size, &density[0], GL_DYNAMIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER,alive_vbo);
+	glBufferData(GL_ARRAY_BUFFER, float_size, &isAlive[0], GL_DYNAMIC_DRAW);
 }
 
 void SPH::render()
@@ -239,4 +419,28 @@ void SPH::setBuoyancy(float b)
 void SPH::setLifeDeduction(float f)
 {
 	lifeDeduction = f;
+}
+
+float SPH::pVarPoly(float h, float r)
+{
+	if (0<= r && r <= h)
+		return pow(h*h - r*r,3);
+	else return 0;
+}
+
+glm::vec4 SPH::pVarSpiky(float h, glm::vec4 p, glm::vec4 pn)
+{
+	glm::vec4 r = p - pn;
+	float r_length = length(r);
+	if (0< r_length && r_length <= h)
+		return  r/r_length * pow(h - r_length,2);
+	else return glm::vec4(0,0,0,0);
+}
+
+float SPH::pVarVisc(float h, glm::vec4 p, glm::vec4 pn)
+{
+	float r_length = length(p-pn);
+	if (0<= r_length && r_length <= h)
+		return h - r_length;
+	else return 0;
 }

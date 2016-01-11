@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 10000
+#define NUM_PARTICLES 5000
 
 #include <myCL/Sph.h>
 #include <Util/util.h>
@@ -68,7 +68,6 @@ int main(void) {
 	shaderprogram->update("model",model);
 	shaderprogram->update("view",view);
 	shaderprogram->update("projection",projection);
-	shaderprogram->update("lightDir", glm::vec3(0,0,1)); // for pointSpheres.frag
 
 	//						    Textures
 	Texture* textures[10];
@@ -100,14 +99,6 @@ int main(void) {
 		trackball.update(window,view);
 		shaderprogram->update("view", view);
 		
-	/*	if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) == GLFW_PRESS)
-		{
-			sph->reset();
-			sph->init(2);
-			sph->updateData();
-			framecount=0;
-		}*/
-
 		if (framecount < NUM_PARTICLES)
 		{
 			for (int j = 0; j < frameoffset; j++)
@@ -120,17 +111,17 @@ int main(void) {
 		
 		if (delay % 2 == 0)
 		{
-		//sph->updateData(sph->aliveHelper);
 		delay = 0;
 		framecount++;
 		}
 		delay++;
 		
-		sph->neighboursearch;  
-		sph->densPressCalc; 
-		sph->sphCalc;	 
-		sph->integration; 
-
+		sph->neighboursearch();  
+		sph->densPressCalc(); 
+		sph->sphCalc();	 
+		sph->integration(); 
+		
+		sph->updateVBOs();
 		sph->render();
 
 		glDepthMask(GL_TRUE);

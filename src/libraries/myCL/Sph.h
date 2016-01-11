@@ -69,6 +69,7 @@ class SPH
 		void loadData();
 		
 		//update data on the gpu
+		void updateVBOs();
 
 		//render function
 		void render();
@@ -87,6 +88,12 @@ class SPH
 		void integration();
 
 	private: 
+
+	float pVarPoly(float h, float r);
+
+	glm::vec4 pVarSpiky(float h, glm::vec4 p, glm::vec4 pn);
+
+	float pVarVisc(float h, glm::vec4 p, glm::vec4 pn);
 
 };
 
