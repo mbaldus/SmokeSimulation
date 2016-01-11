@@ -2,11 +2,12 @@
 
 #include "clSph.h"
 
-CLsph::CLsph(float delta, float radius, float r0)
+CLsph::CLsph(float delta, float radius, float r0, int num)
 {
 	printf("Initialize OpenCL Object and context \n");
 
 	//normal sph
+	m_num = num;
 	dt = delta; 
 	smoothingLength = radius; 
 	rho0 = r0;
@@ -15,11 +16,26 @@ CLsph::CLsph(float delta, float radius, float r0)
 	spiky = -45/(PI*pow(smoothingLength,6));
 	visConst = 45/(PI*pow(smoothingLength,6));
 
-	buoyancy = 3.0f;
+	buoyancy = 1.0f;
 	lifeDeduction = 0.25;
 
 	printf("Constants: \n dt = %f \n smoothingLength = %f \n poly6 = %f \n spiky = %f \n visConst = %f \n", 
 		   dt, smoothingLength, poly6, spiky, visConst);
+	printf("Number of Particles = %d \n", m_num);
+
+	pos.resize(m_num);
+	vel.resize(m_num);
+	life.resize(m_num);
+	rndmSprite.resize(m_num);
+	isAlive.resize(m_num);
+	aliveHelper.resize(m_num);
+	neighbours.resize(m_num*50);
+	counter.resize(m_num);
+	density.resize(m_num);
+	pressure.resize(m_num);
+	viscosity.resize(m_num);
+	mass.resize(m_num);
+	forceIntern.resize(m_num);
 
 	std::vector<cl::Platform> platforms;
 	m_err = cl::Platform::get(&platforms);
@@ -112,7 +128,166 @@ void CLsph::loadProgram(std::string kernel_source)
 
 }
 
-void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std::vector<float> life, std::vector<float> rndm,std::vector<float> isAlive, std::vector<int> isAliveHelper, std::vector<int> neighbours,std::vector<int> counter, std::vector<float> density, std::vector<float> pressure, std::vector<float> viscosity, std::vector<float> mass,std::vector<glm::vec4> forceIntern)
+void CLsph::init(int mode)
+{
+	if(mode < 1 || mode > 4)
+		mode = 1;
+
+	float x,y,z;
+	float rand_x,rand_y,rand_z;
+
+	switch (mode)
+	{
+	case 1: //chimney
+		for (int i = 0; i <m_num; i++)
+		{
+			x = rand_float(-0.125,0.125);
+			z = rand_float(-0.125,0.125);
+			y = rand_float(0.125,0.25);
+			pos[i] = glm::vec4(x,y,z,1.0f);
+
+			rand_x = rand_float(-0.2,0.2);
+			rand_y = rand_float(0.3,2.5);
+			rand_z = rand_float(-0.2,0.2);
+			vel[i] = glm::vec4(rand_x,rand_y,rand_z,0);
+		
+			setBuoyancy(50.0f);
+			setLifeDeduction(0.15);
+		}
+		break;
+
+	case 2: //side
+		for (int i = 0; i <m_num; i++)
+		{
+			x = rand_float(-0.75,-0.5);
+			z = rand_float(-0.125,0.125);
+			y = rand_float(0.25,0.5);
+			pos[i] = glm::vec4(x,y,z,1.0f);
+
+			rand_x = rand_float(0.5,3);
+			rand_y = rand_float(0.25,1.5);
+			vel[i] = glm::vec4(rand_x,rand_y,0,0);
+		
+			setBuoyancy(1.5f);
+			setLifeDeduction(0.25);
+		}
+		break;
+	
+	case 3: //two sources (chimney)
+		for (int i = 0; i <m_num; i++)
+		{
+
+			if(i % 2 == 0)
+			{
+			x = rand_float(-0.125,0.125);
+			z = rand_float(-0.125,0.125);
+			y = rand_float(-0.49,-0.25);
+			pos[i] = glm::vec4(x,y,z,1.0f);
+
+			rand_x = rand_float(-0.2,0.2);
+			rand_y = rand_float(1.0,1.75);
+			rand_z = rand_float(-0.2,0.2);
+
+			vel[i] = glm::vec4(rand_x,rand_y,rand_z,0);
+			}
+			else if (i % 2 == 1)
+			{
+			x = rand_float(-0.125,0.125);
+			z = rand_float(-0.125,0.125);
+			y = rand_float(1.99,1.75);
+			pos[i] = glm::vec4(x,y,z,1.0f);
+
+			rand_x = rand_float(-0.2,0.2);
+			rand_y = rand_float(1.5,3.5);
+			rand_z = rand_float(-0.2,0.2);
+			vel[i] = glm::vec4(rand_x,-rand_y,rand_z,0);
+
+			setBuoyancy(25.0f);
+			setLifeDeduction(0.25);
+			}
+		}
+		break;
+	
+	case 4: // two sources (side)
+		for (int i = 0; i <m_num; i++)
+		{
+			if(i % 2 == 0)
+			{
+			x = rand_float(-0.9,-0.75);
+			z = rand_float(-0.25,0.25);
+			y = rand_float(-0.40,-0.10);
+			pos[i] = glm::vec4(x,y,z,1.0f);
+		 
+			rand_x = rand_float(1.0,4.5);
+			rand_y = rand_float(0.35,1.75);
+			rand_z = rand_float(-0.2,0.2);
+			
+			vel[i] = glm::vec4(rand_x,rand_y,rand_z,0);
+			}
+			else if (i % 2 == 1)
+			{
+			x = rand_float(0.70,0.9);
+			z = rand_float(-0.25,0.25);
+			y = rand_float(-0.40,-0.10);
+			pos[i] = glm::vec4(x,y,z,1.0f);
+
+			rand_x = rand_float(1.1,4.5);
+			rand_y = rand_float(0.7,4.5);
+			rand_z = rand_float(0.0,0.3);
+			vel[i] = glm::vec4(-rand_x,rand_y,rand_z,0);
+		
+		    setBuoyancy(1.5f);
+		    setLifeDeduction(0.25);
+			}
+		}
+		break;
+	}
+
+	for (int i = 0; i <m_num; i++)
+	{
+		life[i] = rand_float(0.0f,1.0f);
+		rndmSprite[i] = float(i % 10);
+		density[i] = 0.0f;
+		pressure[i] = 1.0f;
+		viscosity[i] = 1.0f;
+		mass[i] = 0.000025f;
+		forceIntern[i] = glm::vec4(0,0,0,0);
+		counter[i]=0;
+	
+		//set x particles alive at the beginning to avoid explosions
+		isAlive[i] = 0.0;
+		aliveHelper[i] = 0;
+		if(i < 50)
+		{
+		isAlive[i] = 1.0;
+		aliveHelper[i] = 1;
+		}
+	}
+	
+	//loadData();
+	//loadData(pos,vel,life,rndmSprite,isAlive,aliveHelper, neighbours,counter,density,pressure,viscosity,mass,forceIntern);
+}
+
+void CLsph::reset()
+{
+	for (int i = 0; i <m_num; i++)
+	{
+		pos[i] = glm::vec4(0.0,0.0,0.0,1.0f);
+		vel[i] = glm::vec4(0.0,0.0,0.0,0.0f);
+		life[i] = 0;
+		rndmSprite[i] = 0;
+		density[i] = 0.0f;
+		pressure[i] = 1.0f;
+		viscosity[i] = 1.0f;
+		mass[i] = 0.000025f;
+		forceIntern[i] = glm::vec4(0,0,0,0);
+		counter[i]=0;
+		isAlive[i] = 0.0;
+		aliveHelper[i] = 0;
+	}
+}
+
+void CLsph::loadData()
 {
 	printf("LOAD DATA \n");
 	//store number of particles and the size of bytes of our arrays
@@ -126,7 +301,7 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	p_vbo = createVBO(&pos[0], array_size, 4, 0); 
 	life_vbo = createVBO(&life[0], float_size, 1,1);
 	dens_vbo = createVBO(&density[0], float_size, 1, 2);
-	rndm_vbo = createVBO(&rndm[0], float_size, 1, 3);
+	rndm_vbo = createVBO(&rndmSprite[0], float_size, 1, 3);
 	alive_vbo = createVBO(&isAlive[0], float_size, 1,4);
 	//printf("p_vbo = %d, life_vbo = %d, rndm_vbo = %d \n" , p_vbo, life_vbo, rndm_vbo);
 
@@ -161,7 +336,7 @@ void CLsph::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, std
 	m_err = m_queue.enqueueWriteBuffer(cl_vel_gen, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_neighbours, CL_TRUE,0, extended_int_size, &neighbours[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_counter, CL_TRUE,0, int_size, &counter[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_isAliveHelper, CL_TRUE,0, int_size, &isAliveHelper[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_isAliveHelper, CL_TRUE,0, int_size, &aliveHelper[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_pressure, CL_TRUE,0, float_size, &pressure[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_viscosity, CL_TRUE,0, float_size, &viscosity[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_mass, CL_TRUE,0, float_size, &mass[0], NULL, &m_event);
@@ -174,6 +349,26 @@ void CLsph::updateData(std::vector<int> aliveHelper)
 {
 	int_size = m_num * sizeof(int);
 	m_err = m_queue.enqueueWriteBuffer(cl_isAliveHelper, CL_TRUE,0, int_size, &aliveHelper[0], NULL, &m_event);
+	m_queue.finish();
+}
+
+void CLsph::updateData()
+{
+	int_size = m_num * sizeof(int);
+	array_size = m_num * sizeof(glm::vec4);
+	extended_int_size = m_num * sizeof(int) * 50;
+	float_size = m_num * sizeof(float);
+
+	m_err = m_queue.enqueueWriteBuffer(cl_velocities, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_pos_gen, CL_TRUE,0, array_size, &pos[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_vel_gen, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_neighbours, CL_TRUE,0, extended_int_size, &neighbours[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_counter, CL_TRUE,0, int_size, &counter[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_isAliveHelper, CL_TRUE,0, int_size, &aliveHelper[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_pressure, CL_TRUE,0, float_size, &pressure[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_viscosity, CL_TRUE,0, float_size, &viscosity[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_mass, CL_TRUE,0, float_size, &mass[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_forceIntern, CL_TRUE,0, array_size, &forceIntern[0], NULL, &m_event);
 	m_queue.finish();
 }
 
