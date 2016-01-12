@@ -2,14 +2,13 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 5000
+#define NUM_PARTICLES 1500
 
 #include <myCL/Sph.h>
 #include <Util/util.h>
 #include <GL/GLTools.h>
 #include <GL/CVK_Trackball.h>
 #include <GL/ShaderProgram.h>
-#include <GL/CVK_Sphere.h>
 #include <GL/Texture.h>
  
 
@@ -36,13 +35,12 @@ void loadAndBindTextures(Texture* textures[], ShaderProgram* shaderprogram)
 }
 
 int main(void) {
-	printf("OpenCL Particles\n");
+	printf("CPU VERSION SPH\n");
 	
 	GLFWwindow* window = GLTools::generateWindow(1280,720,100,100,"SPH Demo");
 	glClearColor(0.85, 0.85, 0.85, 0.0);
 
 	Trackball trackball(GLTools::getWidth(window),GLTools::getHeight(window));
-	Sphere* sphere = new Sphere(0.25);
 
 	int num = NUM_PARTICLES;
 	SPH* sph = new SPH(0.00375f,0.05f,0.59,num);
@@ -51,9 +49,10 @@ int main(void) {
 	//						SPH INITILIZATION
 	  /*
 	  mode 1 => chimney
-	  mode 2 => side
-	  mode 3 => two sources chimney
-	  mode 4 => two sources side
+	  mode 2 => big chimney
+	  mode 3 => side
+	  mode 4 => two sources chimney
+	  mode 5 => two sources side
 	  */
 	sph->init(1);
 	sph->loadData();
@@ -76,16 +75,15 @@ int main(void) {
 	glUniform1iv(glGetUniformLocation(shaderprogram->getShaderProgramHandle(), "smokeTextures"), 10, smokeTexs);
 	
 	//###################################################################
-	int delay = 0;
-	int framecount = 0;
-	int frameoffset= 10 ;
+	int framecount =0;
+	int frameoffset= 20 ;
 
 	std::function<void(double)> loop = 
 		[&sph,
 		&shaderprogram,
-		&trackball, &sphere,
+		&trackball,
 		&model,
-		&view, &delay, &framecount, &frameoffset,
+		&view, &framecount, &frameoffset,
 		&window](double deltatime)
 	{
 		glEnable(GL_DEPTH_TEST);
@@ -99,7 +97,7 @@ int main(void) {
 		trackball.update(window,view);
 		shaderprogram->update("view", view);
 		
-		if (framecount < NUM_PARTICLES)
+		if (framecount*frameoffset <= NUM_PARTICLES)
 		{
 			for (int j = 0; j < frameoffset; j++)
 			{
@@ -109,13 +107,6 @@ int main(void) {
 			printf("\rParticles alive: %d", framecount*frameoffset);
 		}
 		
-		if (delay % 2 == 0)
-		{
-		delay = 0;
-		framecount++;
-		}
-		delay++;
-		
 		sph->neighboursearch();  
 		sph->densPressCalc(); 
 		sph->sphCalc();	 
@@ -123,6 +114,8 @@ int main(void) {
 		
 		sph->updateVBOs();
 		sph->render();
+
+		framecount++;
 
 		glDepthMask(GL_TRUE);
 		glDisable(GL_BLEND);
@@ -134,7 +127,6 @@ int main(void) {
 	GLTools::destroyWindow(window);
 	delete shaderprogram;
 	delete sph;
-	delete sphere;
    return 0;
 }
 

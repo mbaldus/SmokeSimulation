@@ -156,7 +156,25 @@ void CLsph::init(int mode)
 		}
 		break;
 
-	case 2: //side
+	case 2: // big chimney
+		for (int i = 0; i <m_num; i++)
+		{
+			x = rand_float(-0.225,0.225);
+			z = rand_float(-0.225,0.225);
+			y = rand_float(0,0.25);
+			pos[i] = glm::vec4(x,y,z,1.0f);
+
+			rand_x = rand_float(-0.2,0.2);
+			rand_y = rand_float(0.3,2.5);
+			rand_z = rand_float(-0.2,0.2);
+			vel[i] = glm::vec4(rand_x,rand_y,rand_z,0);
+		
+			setBuoyancy(50.0f);
+			setLifeDeduction(0.25);
+		}
+		break;
+
+	case 3: //side
 		for (int i = 0; i <m_num; i++)
 		{
 			x = rand_float(-0.75,-0.5);
@@ -173,7 +191,7 @@ void CLsph::init(int mode)
 		}
 		break;
 	
-	case 3: //two sources (chimney)
+	case 4: //two sources (chimney)
 		for (int i = 0; i <m_num; i++)
 		{
 
@@ -208,7 +226,7 @@ void CLsph::init(int mode)
 		}
 		break;
 	
-	case 4: // two sources (side)
+	case 5: // two sources (side)
 		for (int i = 0; i <m_num; i++)
 		{
 			if(i % 2 == 0)
@@ -263,9 +281,6 @@ void CLsph::init(int mode)
 		aliveHelper[i] = 1;
 		}
 	}
-	
-	//loadData();
-	//loadData(pos,vel,life,rndmSprite,isAlive,aliveHelper, neighbours,counter,density,pressure,viscosity,mass,forceIntern);
 }
 
 void CLsph::reset()
@@ -319,6 +334,7 @@ void CLsph::loadData()
 	cl_velocities = cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
 	cl_pos_gen =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
 	cl_vel_gen =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
+	cl_life_gen = cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_neighbours = cl::Buffer(m_context, CL_MEM_READ_WRITE, extended_int_size, NULL, &m_err); 
 	cl_counter = cl::Buffer(m_context, CL_MEM_READ_WRITE, int_size, NULL, &m_err); 
 	cl_isAliveHelper = cl::Buffer(m_context, CL_MEM_READ_WRITE, int_size, NULL, &m_err); 
@@ -334,6 +350,7 @@ void CLsph::loadData()
 	m_err = m_queue.enqueueWriteBuffer(cl_velocities, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_pos_gen, CL_TRUE,0, array_size, &pos[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_vel_gen, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_life_gen, CL_TRUE,0, float_size, &life[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_neighbours, CL_TRUE,0, extended_int_size, &neighbours[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_counter, CL_TRUE,0, int_size, &counter[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_isAliveHelper, CL_TRUE,0, int_size, &aliveHelper[0], NULL, &m_event);
@@ -360,8 +377,8 @@ void CLsph::updateData()
 	float_size = m_num * sizeof(float);
 
 	m_err = m_queue.enqueueWriteBuffer(cl_velocities, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_pos_gen, CL_TRUE,0, array_size, &pos[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_vel_gen, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
+	//m_err = m_queue.enqueueWriteBuffer(cl_pos_gen, CL_TRUE,0, array_size, &pos[0], NULL, &m_event);
+	//m_err = m_queue.enqueueWriteBuffer(cl_vel_gen, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_neighbours, CL_TRUE,0, extended_int_size, &neighbours[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_counter, CL_TRUE,0, int_size, &counter[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_isAliveHelper, CL_TRUE,0, int_size, &aliveHelper[0], NULL, &m_event);
@@ -371,8 +388,6 @@ void CLsph::updateData()
 	m_err = m_queue.enqueueWriteBuffer(cl_forceIntern, CL_TRUE,0, array_size, &forceIntern[0], NULL, &m_event);
 	m_queue.finish();
 }
-
-
 
 void CLsph::genNeighboursKernel()
 {
@@ -514,16 +529,17 @@ void CLsph::genIntegrationKernel()
 		m_err = m_IntegrationKernel.setArg(1,cl_velocities);
 		m_err = m_IntegrationKernel.setArg(2,cl_pos_gen);
 		m_err = m_IntegrationKernel.setArg(3,cl_vel_gen);
-		m_err = m_IntegrationKernel.setArg(4,cl_vbos[1]); //life
-		m_err = m_IntegrationKernel.setArg(5,cl_vbos[2]); //density
-		m_err = m_IntegrationKernel.setArg(6,cl_mass);
-		m_err = m_IntegrationKernel.setArg(7,cl_forceIntern);
-		m_err = m_IntegrationKernel.setArg(8,rho0);
-		m_err = m_IntegrationKernel.setArg(9,dt);
-		m_err = m_IntegrationKernel.setArg(10,cl_vbos[4]); //alive
-		m_err = m_IntegrationKernel.setArg(11,cl_isAliveHelper); 
-		m_err = m_IntegrationKernel.setArg(12,buoyancy);
-		m_err = m_IntegrationKernel.setArg(13,lifeDeduction);
+		m_err = m_IntegrationKernel.setArg(4,cl_life_gen);
+		m_err = m_IntegrationKernel.setArg(5,cl_vbos[1]); //life
+		m_err = m_IntegrationKernel.setArg(6,cl_vbos[2]); //density
+		m_err = m_IntegrationKernel.setArg(7,cl_mass);
+		m_err = m_IntegrationKernel.setArg(8,cl_forceIntern);
+		m_err = m_IntegrationKernel.setArg(9,rho0);
+		m_err = m_IntegrationKernel.setArg(10,dt);
+		m_err = m_IntegrationKernel.setArg(11,cl_vbos[4]); //alive
+		m_err = m_IntegrationKernel.setArg(12,cl_isAliveHelper); 
+		m_err = m_IntegrationKernel.setArg(13,buoyancy);
+		m_err = m_IntegrationKernel.setArg(14,lifeDeduction);
 
 	}catch(cl::Error er)
 	{
@@ -548,6 +564,7 @@ void CLsph::runKernel(int kernelnumber)
 	m_err = m_queue.enqueueAcquireGLObjects(&cl_vbos, NULL, &m_event);
 	m_queue.finish();
 
+	int localKernelSize = 1024;
 	//execute the kernel
 	//0 == Neighbours
 	if(kernelnumber == 0)

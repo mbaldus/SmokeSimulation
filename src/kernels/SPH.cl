@@ -110,7 +110,7 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
 	}
 }
 
-__kernel void integration(__global float4* pos,  __global float4* vel, __global float4* pos_gen, __global float4* vel_gen, __global float* life, __global float* density,
+__kernel void integration(__global float4* pos,  __global float4* vel, __global float4* pos_gen, __global float4* vel_gen, __global float* life_gen, __global float* life, __global float* density,
 						  __global float* mass, __global float4* forceIntern, float rho0, float dt, __global float* isAlive, __global int* aliveHelper, float buoyancy, float lifeDeduction)
 {
     unsigned int i = get_global_id(0);
@@ -131,10 +131,8 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
     {
         p_old = pos_gen[i];
         v_old = vel_gen[i];
-        life[i] = 1.0;    
+        life[i] = 1;    
     }	
-
-	float b = 50;
 
 	//float gravityForce = -9.81f * mass[i];
 	float gravityForce = buoyancy * (density[i] - rho0) * -9.81f * mass[i];

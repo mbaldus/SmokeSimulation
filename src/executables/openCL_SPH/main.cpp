@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 10000
+#define NUM_PARTICLES 10240
 
 #define NEIGHBOURS 0
 #define DENSITY 1
@@ -15,7 +15,6 @@
 #include <GL/GLTools.h>
 #include <GL/CVK_Trackball.h>
 #include <GL/ShaderProgram.h>
-#include <GL/CVK_Sphere.h>
 #include <GL/Texture.h>
  
 
@@ -42,13 +41,12 @@ void loadAndBindTextures(Texture* textures[], ShaderProgram* shaderprogram)
 }
 
 int main(void) {
-	printf("OpenCL Particles\n");
+	printf("OpenCL Version SPH\n");
 	
 	GLFWwindow* window = GLTools::generateWindow(1280,720,100,100,"SPH Demo");
 	glClearColor(0.85, 0.85, 0.85, 0.0);
 
 	Trackball trackball(GLTools::getWidth(window),GLTools::getHeight(window));
-	Sphere* sphere = new Sphere(0.25);
 
 	int num = NUM_PARTICLES;
 	CLsph* sph = new CLsph(0.00375f,0.05f,0.59,num);
@@ -60,11 +58,12 @@ int main(void) {
 	//						SPH INITILIZATION
 	  /*
 	  mode 1 => chimney
-	  mode 2 => side
-	  mode 3 => two sources chimney
-	  mode 4 => two sources side
+	  mode 2 => big chimney
+	  mode 3 => side
+	  mode 4 => two sources chimney
+	  mode 5 => two sources side
 	  */
-	sph->init(1);
+	sph->init(2);
 	sph->loadData();
 	sph->genNeighboursKernel();
 	sph->genDensityKernel();
@@ -92,12 +91,12 @@ int main(void) {
 	//###################################################################
 	int delay = 0;
 	int framecount = 0;
-	int frameoffset= 10 ;
+	int frameoffset= 20;
 
 	std::function<void(double)> loop = 
 		[&sph,
 		&shaderprogram,
-		&trackball, &sphere,
+		&trackball,
 		&model,
 		&view, &delay, &framecount, &frameoffset,
 		&window](double deltatime)
@@ -116,28 +115,22 @@ int main(void) {
 	/*	if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) == GLFW_PRESS)
 		{
 			sph->reset();
-			sph->init(2);
+			sph->updateData();
+			sph->init(3);
 			sph->updateData();
 			framecount=0;
 		}*/
 
-		if (framecount < NUM_PARTICLES)
+		if (framecount * frameoffset <= NUM_PARTICLES)
 		{
 			for (int j = 0; j < frameoffset; j++)
 			{
 				if(framecount*frameoffset+j<NUM_PARTICLES)
 				sph->aliveHelper[framecount*frameoffset+j] = 1 ;
 			}
+			sph->updateData(sph->aliveHelper);
 			printf("\rParticles alive: %d", framecount*frameoffset);
 		}
-		
-		if (delay % 2 == 0)
-		{
-		sph->updateData(sph->aliveHelper);
-		delay = 0;
-		framecount++;
-		}
-		delay++;
 		
 		sph->runKernel(NEIGHBOURS);  //0 == Nachbarschaftssuche
 		sph->runKernel(DENSITY);	 //1 == Dichte und Druckberechnung
@@ -146,9 +139,10 @@ int main(void) {
 
 		sph->render();
 
+		framecount++;
+
 		glDepthMask(GL_TRUE);
 		glDisable(GL_BLEND);
-
 	};
 	GLTools::render(window, loop);
 
@@ -156,7 +150,6 @@ int main(void) {
 	GLTools::destroyWindow(window);
 	delete shaderprogram;
 	delete sph;
-	delete sphere;
    return 0;
 }
 

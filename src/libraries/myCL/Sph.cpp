@@ -70,7 +70,25 @@ void SPH::init(int mode)
 		}
 		break;
 
-	case 2: //side
+	case 2: // big chimney
+		for (int i = 0; i <m_num; i++)
+		{
+			x = rand_float(-0.225,0.225);
+			z = rand_float(-0.225,0.225);
+			y = rand_float(0,0.25);
+			pos[i] = glm::vec4(x,y,z,1.0f);
+
+			rand_x = rand_float(-0.2,0.2);
+			rand_y = rand_float(0.3,2.5);
+			rand_z = rand_float(-0.2,0.2);
+			vel[i] = glm::vec4(rand_x,rand_y,rand_z,0);
+		
+			setBuoyancy(50.0f);
+			setLifeDeduction(0.25);
+		}
+		break;
+
+	case 3: //side
 		for (int i = 0; i <m_num; i++)
 		{
 			x = rand_float(-0.75,-0.5);
@@ -87,7 +105,7 @@ void SPH::init(int mode)
 		}
 		break;
 	
-	case 3: //two sources (chimney)
+	case 4: //two sources (chimney)
 		for (int i = 0; i <m_num; i++)
 		{
 
@@ -122,7 +140,7 @@ void SPH::init(int mode)
 		}
 		break;
 	
-	case 4: // two sources (side)
+	case 5: // two sources (side)
 		for (int i = 0; i <m_num; i++)
 		{
 			if(i % 2 == 0)
@@ -167,6 +185,9 @@ void SPH::init(int mode)
 		mass[i] = 0.000025f;
 		forceIntern[i] = glm::vec4(0,0,0,0);
 		counter[i]=0;
+
+		m_pos_gen[i] = pos[i];
+		m_vel_gen[i] = vel[i];
 	
 		//set x particles alive at the beginning to avoid explosions
 		isAlive[i] = 0.0;

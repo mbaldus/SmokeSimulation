@@ -31,6 +31,7 @@ class CLsph
 		
 		cl::Buffer cl_pos_gen;		//want to have the start points reseting particles
 		cl::Buffer cl_vel_gen;
+		cl::Buffer cl_life_gen; 
 		
 		//SPH parameters and Buffers
 		cl::Buffer cl_pressure;
