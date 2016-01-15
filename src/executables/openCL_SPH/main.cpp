@@ -92,13 +92,15 @@ int main(void) {
 	int delay = 0;
 	int framecount = 0;
 	int frameoffset= 20;
+	float time_spent = 0.0f;
+	float max_time_spent = 0.0f;
 
 	std::function<void(double)> loop = 
 		[&sph,
 		&shaderprogram,
 		&trackball,
 		&model,
-		&view, &delay, &framecount, &frameoffset,
+		&view, &delay, &framecount, &frameoffset, &time_spent, &max_time_spent,
 		&window](double deltatime)
 	{
 		glEnable(GL_DEPTH_TEST);
@@ -129,13 +131,25 @@ int main(void) {
 				sph->aliveHelper[framecount*frameoffset+j] = 1 ;
 			}
 			sph->updateData(sph->aliveHelper);
-			printf("\rParticles alive: %d", framecount*frameoffset);
+			printf("\rParticles alive: %d     ", framecount*frameoffset);
 		}
 		
+		clock_t begin;
+		begin = clock();
+
 		sph->runKernel(NEIGHBOURS);  //0 == Nachbarschaftssuche
 		sph->runKernel(DENSITY);	 //1 == Dichte und Druckberechnung
 		sph->runKernel(SPH);		 //2 == Sph
 		sph->runKernel(INTEGRATION); //3 == Integration
+
+		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
+		
+		if (time_spent > max_time_spent)
+		{
+			max_time_spent = time_spent;
+			printf("Simulation time: %f sec \n", time_spent);
+		}
+		
 
 		sph->render();
 

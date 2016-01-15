@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 1500
+#define NUM_PARTICLES 5000
 
 #include <myCL/Sph.h>
 #include <Util/util.h>
@@ -54,7 +54,7 @@ int main(void) {
 	  mode 4 => two sources chimney
 	  mode 5 => two sources side
 	  */
-	sph->init(1);
+	sph->init(2);
 	sph->loadData();
 
 	//###################################################################
@@ -78,12 +78,15 @@ int main(void) {
 	int framecount =0;
 	int frameoffset= 20 ;
 
+	float time_spent = 0.0f;
+	float max_time_spent = 0.0f;
+
 	std::function<void(double)> loop = 
 		[&sph,
 		&shaderprogram,
 		&trackball,
 		&model,
-		&view, &framecount, &frameoffset,
+		&view, &framecount, &frameoffset, &time_spent, &max_time_spent,
 		&window](double deltatime)
 	{
 		glEnable(GL_DEPTH_TEST);
@@ -104,14 +107,25 @@ int main(void) {
 				if(framecount*frameoffset+j<NUM_PARTICLES)
 				sph->aliveHelper[framecount*frameoffset+j] = 1 ;
 			}
-			printf("\rParticles alive: %d", framecount*frameoffset);
+			printf("\rParticles alive: %d     ", framecount*frameoffset);
 		}
-		
+	
+		clock_t begin;
+		begin = clock();
+
 		sph->neighboursearch();  
 		sph->densPressCalc(); 
 		sph->sphCalc();	 
 		sph->integration(); 
 		
+		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
+		
+		if (time_spent > max_time_spent)
+		{
+			max_time_spent = time_spent;
+			printf("Simulation time: %f sec \n", time_spent);
+		}
+
 		sph->updateVBOs();
 		sph->render();
 
