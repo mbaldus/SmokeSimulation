@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 10240
+#define NUM_PARTICLES 32768
 
 #define NEIGHBOURS 0
 #define DENSITY 1
@@ -89,18 +89,20 @@ int main(void) {
 	glUniform1iv(glGetUniformLocation(shaderprogram->getShaderProgramHandle(), "smokeTextures"), 10, smokeTexs);
 	
 	//###################################################################
-	int delay = 0;
-	int framecount = 0;
+	int framecount = 0.0f;
 	int frameoffset= 20;
+
 	float time_spent = 0.0f;
 	float max_time_spent = 0.0f;
+	float average_time = 0.0f;
 
 	std::function<void(double)> loop = 
 		[&sph,
 		&shaderprogram,
 		&trackball,
 		&model,
-		&view, &delay, &framecount, &frameoffset, &time_spent, &max_time_spent,
+		&view, &framecount, &frameoffset,
+		&time_spent, &max_time_spent, &average_time,
 		&window](double deltatime)
 	{
 		glEnable(GL_DEPTH_TEST);
@@ -134,22 +136,27 @@ int main(void) {
 			printf("\rParticles alive: %d     ", framecount*frameoffset);
 		}
 		
-		clock_t begin;
-		begin = clock();
+		clock_t begin; //<Timer>
+		begin = clock(); //<Timer>
 
 		sph->runKernel(NEIGHBOURS);  //0 == Nachbarschaftssuche
 		sph->runKernel(DENSITY);	 //1 == Dichte und Druckberechnung
 		sph->runKernel(SPH);		 //2 == Sph
 		sph->runKernel(INTEGRATION); //3 == Integration
 
+		//Timer
 		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
-		
+		average_time += time_spent;
+
 		if (time_spent > max_time_spent)
-		{
 			max_time_spent = time_spent;
-			printf("Simulation time: %f sec \n", time_spent);
+
+		if (framecount % 100 == 0)
+		{
+			printf("Average Simulation = %f sec (100 Steps) \n", average_time/=100);
 		}
-		
+		//End Timer
+
 
 		sph->render();
 
@@ -159,6 +166,8 @@ int main(void) {
 		glDisable(GL_BLEND);
 	};
 	GLTools::render(window, loop);
+
+	printf("Maximal Simulation time: %f sec \n", max_time_spent);
 
 	//cleanup
 	GLTools::destroyWindow(window);

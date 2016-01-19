@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 5000
+#define NUM_PARTICLES 8192
 
 #include <myCL/Sph.h>
 #include <Util/util.h>
@@ -11,7 +11,6 @@
 #include <GL/ShaderProgram.h>
 #include <GL/Texture.h>
  
-
 void loadAndBindTextures(Texture* textures[], ShaderProgram* shaderprogram)
 {
 	textures[0] = new Texture(TEXTURES_PATH "/smoke10.png");
@@ -80,13 +79,15 @@ int main(void) {
 
 	float time_spent = 0.0f;
 	float max_time_spent = 0.0f;
+	float average_time = 0.0f;
 
 	std::function<void(double)> loop = 
 		[&sph,
 		&shaderprogram,
 		&trackball,
 		&model,
-		&view, &framecount, &frameoffset, &time_spent, &max_time_spent,
+		&view, &framecount, &frameoffset,
+		&time_spent, &max_time_spent, &average_time,
 		&window](double deltatime)
 	{
 		glEnable(GL_DEPTH_TEST);
@@ -100,31 +101,37 @@ int main(void) {
 		trackball.update(window,view);
 		shaderprogram->update("view", view);
 		
-		if (framecount*frameoffset <= NUM_PARTICLES)
+		if (framecount * frameoffset <= NUM_PARTICLES)
 		{
 			for (int j = 0; j < frameoffset; j++)
 			{
-				if(framecount*frameoffset+j<NUM_PARTICLES)
-				sph->aliveHelper[framecount*frameoffset+j] = 1 ;
+				if(framecount * frameoffset+j<NUM_PARTICLES)
+				sph->aliveHelper[framecount * frameoffset+j] = 1 ;
 			}
-			printf("\rParticles alive: %d     ", framecount*frameoffset);
+			printf("\rParticles alive: %d     ", framecount * frameoffset);
 		}
 	
-		clock_t begin;
-		begin = clock();
+		clock_t begin; //<Timer>
+		begin = clock(); //<Timer>
 
 		sph->neighboursearch();  
 		sph->densPressCalc(); 
 		sph->sphCalc();	 
 		sph->integration(); 
 		
+		//Timer
 		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
-		
+		average_time += time_spent;
+
 		if (time_spent > max_time_spent)
-		{
 			max_time_spent = time_spent;
-			printf("Simulation time: %f sec \n", time_spent);
+
+		if (framecount % 100 == 0)
+		{
+			printf("Average Simulation = %f sec (100 Steps) \n", average_time/=100);
 		}
+		//End Timer
+
 
 		sph->updateVBOs();
 		sph->render();
@@ -136,6 +143,8 @@ int main(void) {
 
 	};
 	GLTools::render(window, loop);
+	
+	printf("Maximal Simulation time: %f sec \n", max_time_spent);
 
 	//cleanup
 	GLTools::destroyWindow(window);

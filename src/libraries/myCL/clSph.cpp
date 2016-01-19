@@ -564,7 +564,7 @@ void CLsph::runKernel(int kernelnumber)
 	m_err = m_queue.enqueueAcquireGLObjects(&cl_vbos, NULL, &m_event);
 	m_queue.finish();
 
-	int localKernelSize = 1024;
+	int localKernelSize = 16;
 	//execute the kernel
 	//0 == Neighbours
 	if(kernelnumber == 0)
