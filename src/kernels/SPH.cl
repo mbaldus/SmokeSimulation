@@ -78,7 +78,7 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 }
 
 __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neighbour,__global int* counter, __global float* density, __global float* pressure, 
-				  __global float* viscosity, __global float* mass, __global float4* forceIntern, float smoothingLength, float spiky, float visConst, __global float* isAlive)
+				  __global float* mass, __global float4* forceIntern, float smoothingLength, float spiky, float visConst, __global float* isAlive)
 {
     unsigned int i = get_global_id(0);
 

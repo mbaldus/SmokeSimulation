@@ -33,7 +33,6 @@ CLsph::CLsph(float delta, float radius, float r0, int num)
 	counter.resize(m_num);
 	density.resize(m_num);
 	pressure.resize(m_num);
-	viscosity.resize(m_num);
 	mass.resize(m_num);
 	forceIntern.resize(m_num);
 
@@ -267,7 +266,6 @@ void CLsph::init(int mode)
 		rndmSprite[i] = float(i % 10);
 		density[i] = 0.0f;
 		pressure[i] = 1.0f;
-		viscosity[i] = 1.0f;
 		mass[i] = 0.000025f;
 		forceIntern[i] = glm::vec4(0,0,0,0);
 		counter[i]=0;
@@ -293,7 +291,6 @@ void CLsph::reset()
 		rndmSprite[i] = 0;
 		density[i] = 0.0f;
 		pressure[i] = 1.0f;
-		viscosity[i] = 1.0f;
 		mass[i] = 0.000025f;
 		forceIntern[i] = glm::vec4(0,0,0,0);
 		counter[i]=0;
@@ -338,7 +335,6 @@ void CLsph::loadData()
 	cl_counter = cl::Buffer(m_context, CL_MEM_READ_WRITE, int_size, NULL, &m_err); 
 	cl_isAliveHelper = cl::Buffer(m_context, CL_MEM_READ_WRITE, int_size, NULL, &m_err); 
 	cl_pressure =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
-	cl_viscosity =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_mass =  cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
 	cl_forceIntern =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
 
@@ -354,7 +350,6 @@ void CLsph::loadData()
 	m_err = m_queue.enqueueWriteBuffer(cl_counter, CL_TRUE,0, int_size, &counter[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_isAliveHelper, CL_TRUE,0, int_size, &aliveHelper[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_pressure, CL_TRUE,0, float_size, &pressure[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_viscosity, CL_TRUE,0, float_size, &viscosity[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_mass, CL_TRUE,0, float_size, &mass[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_forceIntern, CL_TRUE,0, array_size, &forceIntern[0], NULL, &m_event);
 	m_queue.finish();
@@ -382,7 +377,6 @@ void CLsph::updateData()
 	m_err = m_queue.enqueueWriteBuffer(cl_counter, CL_TRUE,0, int_size, &counter[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_isAliveHelper, CL_TRUE,0, int_size, &aliveHelper[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_pressure, CL_TRUE,0, float_size, &pressure[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_viscosity, CL_TRUE,0, float_size, &viscosity[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_mass, CL_TRUE,0, float_size, &mass[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_forceIntern, CL_TRUE,0, array_size, &forceIntern[0], NULL, &m_event);
 	m_queue.finish();
@@ -487,13 +481,12 @@ void CLsph::genSPHKernel()
 		m_err = m_SphKernel.setArg(3,cl_counter);
 		m_err = m_SphKernel.setArg(4,cl_vbos[2]); //density
 		m_err = m_SphKernel.setArg(5,cl_pressure);
-		m_err = m_SphKernel.setArg(6,cl_viscosity);
-		m_err = m_SphKernel.setArg(7,cl_mass);
-		m_err = m_SphKernel.setArg(8,cl_forceIntern);
-		m_err = m_SphKernel.setArg(9,smoothingLength);
-		m_err = m_SphKernel.setArg(10,spiky);
-		m_err = m_SphKernel.setArg(11,visConst);
-		m_err = m_SphKernel.setArg(12,cl_vbos[4]); //alive
+		m_err = m_SphKernel.setArg(6,cl_mass);
+		m_err = m_SphKernel.setArg(7,cl_forceIntern);
+		m_err = m_SphKernel.setArg(8,smoothingLength);
+		m_err = m_SphKernel.setArg(9,spiky);
+		m_err = m_SphKernel.setArg(10,visConst);
+		m_err = m_SphKernel.setArg(11,cl_vbos[4]); //alive
 
 	}catch(cl::Error er)
 	{

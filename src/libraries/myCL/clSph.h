@@ -35,7 +35,6 @@ class CLsph
 		
 		//SPH parameters and Buffers
 		cl::Buffer cl_pressure;
-		cl::Buffer cl_viscosity;
 		cl::Buffer cl_mass;
 		cl::Buffer cl_forceIntern;
 		cl::Buffer cl_rdnmSprite;
@@ -67,7 +66,6 @@ class CLsph
 		std::vector<int> counter;
 		std::vector<float> density;
 		std::vector<float> pressure;
-		std::vector<float> viscosity;
 		std::vector<float> mass;
 		std::vector<glm::vec4> forceIntern;
 
