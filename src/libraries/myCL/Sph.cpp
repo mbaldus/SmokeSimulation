@@ -31,7 +31,6 @@ SPH::SPH(float delta, float radius, float r0, int num)
 	counter.resize(m_num);
 	density.resize(m_num);
 	pressure.resize(m_num);
-	viscosity.resize(m_num);
 	mass.resize(m_num);
 	forceIntern.resize(m_num);
 	m_pos_gen.resize(m_num);
@@ -181,7 +180,6 @@ void SPH::init(int mode)
 		rndmSprite[i] = float(i % 10);
 		density[i] = 0.0f;
 		pressure[i] = 1.0f;
-		viscosity[i] = 1.0f;
 		mass[i] = 0.000025f;
 		forceIntern[i] = glm::vec4(0,0,0,0);
 		counter[i]=0;

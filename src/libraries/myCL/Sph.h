@@ -51,7 +51,6 @@ class SPH
 		std::vector<int> counter;
 		std::vector<float> density;
 		std::vector<float> pressure;
-		std::vector<float> viscosity;
 		std::vector<float> mass;
 		std::vector<glm::vec4> forceIntern;
 
