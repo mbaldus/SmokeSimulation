@@ -6,6 +6,7 @@ float rand_float(float mn, float mx)
     return mn + (mx-mn)*r;
 }
 
+
 std::string loadfromfile(std::string filename)
 {
 	std::ifstream file;

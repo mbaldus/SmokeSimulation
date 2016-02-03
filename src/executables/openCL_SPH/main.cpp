@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 32768
+#define NUM_PARTICLES 8192
 
 #define NEIGHBOURS 0
 #define DENSITY 1
@@ -80,7 +80,6 @@ int main(void) {
 	shaderprogram->update("model",model);
 	shaderprogram->update("view",view);
 	shaderprogram->update("projection",projection);
-	shaderprogram->update("lightDir", glm::vec3(0,0,1)); // for pointSpheres.frag
 
 	//						    Textures
 	Texture* textures[10];

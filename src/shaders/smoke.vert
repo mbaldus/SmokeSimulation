@@ -24,9 +24,9 @@ void main()
 	gl_Position = projection * view * model * positionAttribute;
 	passPosition = model * positionAttribute;
 
-	gl_PointSize = 5*(2-lifeBuffer) * 37.5 / gl_Position.w; 
-	//2 - 1 = 1 * 37.5  = 4 * 37.5 am Anfangs
-	//2 - 0 = 2 * 37.5	= 4 * 75.0 am Ende
+	gl_PointSize = (2-lifeBuffer) * 187.5 / gl_Position.w; 
+	//2 - 1 = 1 * 187.5  = 187.5 am Anfangs
+	//2 - 0 = 2 * 187.5	= 375	am Ende
 
 	//passthroughs
 	passLifeBuffer = lifeBuffer;

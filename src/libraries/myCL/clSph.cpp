@@ -318,9 +318,8 @@ void CLsph::loadData()
 	dens_vbo = createVBO(&density[0], float_size, 1, 2);
 	rndm_vbo = createVBO(&rndmSprite[0], float_size, 1, 3);
 	alive_vbo = createVBO(&isAlive[0], float_size, 1,4);
-	//printf("p_vbo = %d, life_vbo = %d, rndm_vbo = %d \n" , p_vbo, life_vbo, rndm_vbo);
 
-	//make sure OpenGL is finishedn before proceeding
+	//finish OpenGL proceedings
 	glFinish();
 
 	//create OpenCL buffer from GL VBO
@@ -346,7 +345,7 @@ void CLsph::loadData()
 
 	printf("Pushing data to the GPU \n");
 	//push CPU arrays to the GPU 
-	//data is thightly packed in std::vector starting with the adress of the first element
+	//first element indicates data from vector
 	m_err = m_queue.enqueueWriteBuffer(cl_velocities, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_pos_gen, CL_TRUE,0, array_size, &pos[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_vel_gen, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
@@ -594,7 +593,7 @@ void CLsph::runKernel(int kernelnumber)
 		printf("Error: %s(%d)\n", er.what(), er.err());
 	}
 	
-	//release the vbos so OpenGL can play with them
+	//release the vbos
 	m_err = m_queue.enqueueReleaseGLObjects(&cl_vbos, NULL, &m_event);
 	m_queue.finish();
 
@@ -645,7 +644,6 @@ void CLsph::render()
 {
 	//render Particles from VBOS
 	glEnable(GL_POINT_SPRITE);
-	glEnable(GL_POINT_SMOOTH);
 	glEnable(GL_PROGRAM_POINT_SIZE);
 	
 	glDrawArrays(GL_POINTS, 0, m_num);

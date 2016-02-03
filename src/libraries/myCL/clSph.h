@@ -76,24 +76,20 @@ class CLsph
 		size_t int_size; //(m_num)
 		size_t extended_int_size; //size of particles amount * count of saved neighbours per particle
 
-		//default constructor initializes OpenCL Context and chooses platform and device
 		CLsph(float delta, float radiush, float r0, int num);
-		//default deconstructor releases OpenCL objects and frees device memory
 		~CLsph();
 
-		//load OpenCL program from a file
-		//pass in the kernel source code as a string. 	
+		//load OpenCL program string
 		void loadProgram(std::string kernel_source);
 		
-
-		//setup the data for the kernel (push data to gpu)
+		//pusg data to GPU
 		void loadData();
 		
 		//update data on the gpu
 		void updateData();
 		void updateData(std::vector<int> aliveHelper);
 
-		//setup data for the kernela
+		//setup data for the kernel
 		void genNeighboursKernel();
 		void genDensityKernel();
 		void genSPHKernel();

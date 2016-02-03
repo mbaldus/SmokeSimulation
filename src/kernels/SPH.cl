@@ -114,7 +114,7 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 						  __global float* mass, __global float4* forceIntern, float rho0, float dt, __global float* isAlive, __global int* aliveHelper, float buoyancy, float lifeDeduction)
 {
     unsigned int i = get_global_id(0);
-
+	
 	if(aliveHelper[i] == 1)
 		isAlive[i] = 1.0;
 
