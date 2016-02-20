@@ -354,6 +354,8 @@ void CLsph::loadData()
 	m_err = m_queue.enqueueWriteBuffer(cl_forceIntern, CL_TRUE,0, array_size, &forceIntern[0], NULL, &m_event);
 	m_queue.finish();
 	printf("######################################################\n");
+
+	genKernels();
 }
 
 void CLsph::updateData(std::vector<int> aliveHelper)
@@ -381,7 +383,13 @@ void CLsph::updateData()
 	m_err = m_queue.enqueueWriteBuffer(cl_forceIntern, CL_TRUE,0, array_size, &forceIntern[0], NULL, &m_event);
 	m_queue.finish();
 }
-
+void CLsph::genKernels()
+{
+	genNeighboursKernel();
+	genDensityKernel();
+	genSPHKernel();
+	genIntegrationKernel();
+}
 void CLsph::genNeighboursKernel()
 {
 	printf("genNeighboursKernel\n");

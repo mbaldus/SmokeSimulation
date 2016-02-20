@@ -88,6 +88,7 @@ class CLsph
 		void updateData(std::vector<int> aliveHelper);
 
 		//setup data for the kernel
+		void genKernels();
 		void genNeighboursKernel();
 		void genDensityKernel();
 		void genSPHKernel();

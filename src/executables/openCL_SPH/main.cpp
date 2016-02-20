@@ -65,11 +65,6 @@ int main(void) {
 	  */
 	sph->init(2);
 	sph->loadData();
-	sph->genNeighboursKernel();
-	sph->genDensityKernel();
-	sph->genIntegrationKernel();
-	sph->genSPHKernel();
-
 	//###################################################################
 	//				GL ShaderProgram and Camera Settings
 	ShaderProgram* shaderprogram = new ShaderProgram("/smoke.vert", "/smokeSprite.frag");
