@@ -78,14 +78,14 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 }
 
 __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neighbour,__global int* counter, __global float* density, __global float* pressure, 
-				  __global float* mass, __global float4* forceIntern, float smoothingLength, float spiky, float visConst, __global float* isAlive)
+				  __global float* mass, __global float4* forceIntern, float smoothingLength, float spikyConst, float visConst, __global float* isAlive)
 {
     unsigned int i = get_global_id(0);
 
 	if (isAlive[i] > 0.5)
 	{
 	float4 p = pos[i];
-	float viscosityConst = 0.0000005; //je größer desto mehr zusammenhalt
+	float mue = 0.0000005; //je größer desto mehr zusammenhalt
 	
 	float4 f_pressure = 0.0f;
 	float4 f_viscosity = 0.0f;
@@ -101,9 +101,9 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
 	f_viscosity +=  (vel[j] - vel[i])/density[j] * pVarVisc(smoothingLength,p, pos[j]);
 	}
 
-	f_pressure *= -1.0f  * 1/2 * mass[i] * spiky ;
+	f_pressure *= -1.0f  * 1/2 * mass[i] * spikyConst ;
 	
-	f_viscosity *=  viscosityConst * visConst * mass[i];
+	f_viscosity *=  mue * visConst * mass[i];
 	
 	forceIntern[i] = f_pressure +  f_viscosity;
 	forceIntern[i] /= density[i];

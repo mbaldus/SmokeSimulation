@@ -76,12 +76,12 @@ __kernel void densityCalc(__global float4* pos, __global int* neighbour, __globa
 }
 
 __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neighbour,__global int* counter, __global float* density, __global float* pressure, 
-				  __global float* viscosity, __global float* mass, __global float4* forceIntern, float smoothingLength, float spiky, float visConst)
+				  __global float* viscosity, __global float* mass, __global float4* forceIntern, float smoothingLength, float spikyConst, float visConst)
 {
     unsigned int i = get_global_id(0);
 
 	float4 p = pos[i];
-	float viscosityConst = 20; //je größer desto mehr zusammenhalt
+	float mue = 20; //je größer desto mehr zusammenhalt
 	
 	float4 f_pressure = 0.0f;
 	float4 f_viscosity = 0.0f;
@@ -97,15 +97,15 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
 
 	//printf("distance(p, pos[10]) = %f \n",  pow(smoothingLength - distance(p, pos[10]),2));
 	//printf("test[i]= %f \n", mass[10] * ((pressure[i] + pressure[10])/density[10]) * (p - pos[10])/distance(p, pos[10]) * pow(smoothingLength - distance(p, pos[10]),2));
-	//printf("wSpikyDerivative [%d] -> %f:\n",i, wSpiky(distance(p.xyz, pos[neighbour[i*1000+1]].xyz), smoothingLength, spiky));
+	//printf("wSpikyDerivative [%d] -> %f:\n",i, wSpiky(distance(p.xyz, pos[neighbour[i*1000+1]].xyz), smoothingLength, spikyConst));
 	//printf("wViscosityDerivative [%d] -> %f:\n",i, wVisc(distance(p.xyz, pos[neighbour[i*1000+1]].xyz), smoothingLength, visConst));
 
-	f_pressure *= -1.0f  * 1/2 * mass[i] * spiky ;
+	f_pressure *= -1.0f  * 1/2 * mass[i] * spikyConst ;
 	//printf("(p - pos[10])/distance(p, pos[10]) = %f \n", (p - pos[10])/distance(p, pos[10])); //0.0003
 	//printf("(pressure[%d] + pressure[10])/density[10]) = %f \n", i, ((pressure[i] + pressure[10])/density[10]));
 	//printf("fpressure[%d] : x=%f,y=%f,z=%f \n", i, f_pressure.x, f_pressure.y, f_pressure.z) ;
 
-	f_viscosity *=  viscosityConst * visConst * mass[i];
+	f_viscosity *=  mue * visConst * mass[i];
 	
 	//printf("fviscosity[%d] : x=%f,y=%f,z=%f \n", i, f_viscosity.x, f_viscosity.y, f_viscosity.z) ;
 	forceIntern[i] = f_pressure ;//+  f_viscosity;

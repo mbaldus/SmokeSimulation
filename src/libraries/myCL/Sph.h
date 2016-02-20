@@ -27,7 +27,7 @@ class SPH
 		//SPH parameters and Buffers
 		float dt;
 		float poly6;
-		float spiky;
+		float spikyConst;
 		float visConst;
 		float smoothingLength;
 		float rho0;

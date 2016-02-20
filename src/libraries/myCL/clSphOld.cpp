@@ -13,11 +13,11 @@ CLsphOld::CLsphOld()
 	//visc 20, mass 0.25, gas 0.75
 
 	poly6 = 315/(64*PI*pow(smoothingLength,9));
-	spiky = -45/(PI*pow(smoothingLength,6));
+	spikyConst = -45/(PI*pow(smoothingLength,6));
 	visConst = 45/(PI*pow(smoothingLength,6));
 
-	printf("Constants: \n dt = %f \n smoothingLength = %f \n poly6 = %f \n spiky = %f \n visConst = %f \n", 
-		   dt, smoothingLength, poly6, spiky, visConst);
+	printf("Constants: \n dt = %f \n smoothingLength = %f \n poly6 = %f \n spikyConst = %f \n visConst = %f \n", 
+		   dt, smoothingLength, poly6, spikyConst, visConst);
 
 	std::vector<cl::Platform> platforms;
 	m_err = cl::Platform::get(&platforms);
@@ -258,7 +258,7 @@ void CLsphOld::genSPHKernel()
 		m_err = m_SphKernel.setArg(7,cl_mass);
 		m_err = m_SphKernel.setArg(8,cl_forceIntern);
 		m_err = m_SphKernel.setArg(9,smoothingLength);
-		m_err = m_SphKernel.setArg(10,spiky);
+		m_err = m_SphKernel.setArg(10,spikyConst);
 		m_err = m_SphKernel.setArg(11,visConst);
 
 	}catch(cl::Error er)

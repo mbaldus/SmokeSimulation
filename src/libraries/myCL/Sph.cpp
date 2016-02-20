@@ -11,14 +11,14 @@ SPH::SPH(float delta, float radius, float r0, int num)
 	rho0 = r0;
 
 	poly6 = 315/(64*PI*pow(smoothingLength,9));
-	spiky = -45/(PI*pow(smoothingLength,6));
+	spikyConst = -45/(PI*pow(smoothingLength,6));
 	visConst = 45/(PI*pow(smoothingLength,6));
 
 	buoyancy = 1.0f;
 	lifeDeduction = 0.25;
 
-	printf("Constants: \n dt = %f \n smoothingLength = %f \n poly6 = %f \n spiky = %f \n visConst = %f \n", 
-		   dt, smoothingLength, poly6, spiky, visConst);
+	printf("Constants: \n dt = %f \n smoothingLength = %f \n poly6 = %f \n spikyConst = %f \n visConst = %f \n", 
+		   dt, smoothingLength, poly6, spikyConst, visConst);
 	printf("Number of Particles = %d \n", m_numParticles);
 
 	pos.resize(m_numParticles);
@@ -287,7 +287,7 @@ void SPH::sphCalc()
 		if (isAlive[i] > 0.5)
 		{
 		glm::vec4 p = pos[i];
-		float viscosityConst = 0.0000005; //je größer desto mehr zusammenhalt
+		float mue = 0.0000005; //je größer desto mehr zusammenhalt
 	
 		glm::vec4 f_pressure = glm::vec4(0.0,0.0,0.0,0.0f);
 		glm::vec4 f_viscosity = glm::vec4(0.0,0.0,0.0,0.0f);
@@ -303,9 +303,9 @@ void SPH::sphCalc()
 			f_viscosity +=  (vel[j] - vel[i])/density[j] * pVarVisc(smoothingLength,p, pos[j]);
 		}
 
-		f_pressure *= -1.0f  * 1/2 * mass[i] * spiky ;
+		f_pressure *= -1.0f  * 1/2 * mass[i] * spikyConst ;
 	
-		f_viscosity *=  viscosityConst * visConst * mass[i];
+		f_viscosity *=  mue * visConst * mass[i];
 	
 		forceIntern[i] = f_pressure +  f_viscosity;
 		forceIntern[i] /= density[i];
