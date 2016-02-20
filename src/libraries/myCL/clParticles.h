@@ -32,7 +32,7 @@ class CLparticles
 		
 		int p_vbo; //position VBO
 		int c_vbo; //color VBO
-		int m_num; //nuber of particles
+		int m_numParticles; //nuber of particles
 		size_t array_size; //the size of our arrays num * sizeof(Vec4)
 
 		//default constructor initializes OpenCL Context and chooses platform and device

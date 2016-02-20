@@ -5,7 +5,7 @@
 SPH::SPH(float delta, float radius, float r0, int num)
 {
 	//normal sph
-	m_num = num;
+	m_numParticles = num;
 	dt = delta; 
 	smoothingLength = radius; 
 	rho0 = r0;
@@ -19,22 +19,22 @@ SPH::SPH(float delta, float radius, float r0, int num)
 
 	printf("Constants: \n dt = %f \n smoothingLength = %f \n poly6 = %f \n spiky = %f \n visConst = %f \n", 
 		   dt, smoothingLength, poly6, spiky, visConst);
-	printf("Number of Particles = %d \n", m_num);
+	printf("Number of Particles = %d \n", m_numParticles);
 
-	pos.resize(m_num);
-	vel.resize(m_num);
-	life.resize(m_num);
-	rndmSprite.resize(m_num);
-	isAlive.resize(m_num);
-	aliveHelper.resize(m_num);
-	neighbours.resize(m_num*50);
-	counter.resize(m_num);
-	density.resize(m_num);
-	pressure.resize(m_num);
-	mass.resize(m_num);
-	forceIntern.resize(m_num);
-	m_pos_gen.resize(m_num);
-	m_vel_gen.resize(m_num);
+	pos.resize(m_numParticles);
+	vel.resize(m_numParticles);
+	life.resize(m_numParticles);
+	rndmSprite.resize(m_numParticles);
+	isAlive.resize(m_numParticles);
+	aliveHelper.resize(m_numParticles);
+	neighbours.resize(m_numParticles*50);
+	counter.resize(m_numParticles);
+	density.resize(m_numParticles);
+	pressure.resize(m_numParticles);
+	mass.resize(m_numParticles);
+	forceIntern.resize(m_numParticles);
+	m_pos_gen.resize(m_numParticles);
+	m_vel_gen.resize(m_numParticles);
 }
 
 SPH::~SPH()
@@ -52,7 +52,7 @@ void SPH::init(int mode)
 	switch (mode)
 	{
 	case 1: //chimney
-		for (int i = 0; i <m_num; i++)
+		for (int i = 0; i <m_numParticles; i++)
 		{
 			x = rand_float(-0.125,0.125);
 			z = rand_float(-0.125,0.125);
@@ -70,7 +70,7 @@ void SPH::init(int mode)
 		break;
 
 	case 2: // big chimney
-		for (int i = 0; i <m_num; i++)
+		for (int i = 0; i <m_numParticles; i++)
 		{
 			x = rand_float(-0.225,0.225);
 			z = rand_float(-0.225,0.225);
@@ -88,7 +88,7 @@ void SPH::init(int mode)
 		break;
 
 	case 3: //side
-		for (int i = 0; i <m_num; i++)
+		for (int i = 0; i <m_numParticles; i++)
 		{
 			x = rand_float(-0.75,-0.5);
 			z = rand_float(-0.125,0.125);
@@ -105,7 +105,7 @@ void SPH::init(int mode)
 		break;
 	
 	case 4: //two sources (chimney)
-		for (int i = 0; i <m_num; i++)
+		for (int i = 0; i <m_numParticles; i++)
 		{
 
 			if(i % 2 == 0)
@@ -140,7 +140,7 @@ void SPH::init(int mode)
 		break;
 	
 	case 5: // two sources (side)
-		for (int i = 0; i <m_num; i++)
+		for (int i = 0; i <m_numParticles; i++)
 		{
 			if(i % 2 == 0)
 			{
@@ -174,7 +174,7 @@ void SPH::init(int mode)
 		break;
 	}
 
-	for (int i = 0; i <m_num; i++)
+	for (int i = 0; i <m_numParticles; i++)
 	{
 		life[i] = rand_float(0.0f,1.0f);
 		rndmSprite[i] = float(i % 10);
@@ -203,11 +203,11 @@ void SPH::loadData()
 {
 	printf("LOAD DATA \n");
 
-	m_num = pos.size();
-	array_size = m_num * sizeof(glm::vec4);
-	extended_int_size = m_num * sizeof(int) * 50;
-	int_size = m_num * sizeof(int);
-	float_size = m_num * sizeof(float);
+	m_numParticles = pos.size();
+	array_size = m_numParticles * sizeof(glm::vec4);
+	extended_int_size = m_numParticles * sizeof(int) * 50;
+	int_size = m_numParticles * sizeof(int);
+	float_size = m_numParticles * sizeof(float);
 	
 	//create VBO's (util.cpp)
 	p_vbo = createVBO(&pos[0], array_size, 4, 0); 
@@ -227,7 +227,7 @@ void SPH::loadData()
 
 void SPH::neighboursearch()
 {	
-	for(int i = 0; i < m_num; i++)
+	for(int i = 0; i < m_numParticles; i++)
 	{
 		if (isAlive[i] > 0.5)
 		{
@@ -237,7 +237,7 @@ void SPH::neighboursearch()
 		counter[i] = 0;
 		//save neighbours of THIS particle in an array 
 		//array size is 50 times bigger than pos[]
-		for (int index = 0; index < m_num; index++)
+		for (int index = 0; index < m_numParticles; index++)
 		{
 			if (glm::distance(p, pos[index]) <= smoothingLength && isAlive[index] == 1) // < smoothingLength
 			{
@@ -255,7 +255,7 @@ void SPH::neighboursearch()
 
 void SPH::densPressCalc()
 {
-	for(int i = 0; i < m_num; i++)
+	for(int i = 0; i < m_numParticles; i++)
 	{
 		if (isAlive[i] > 0.5)
 		{
@@ -282,7 +282,7 @@ void SPH::densPressCalc()
 
 void SPH::sphCalc()
 {
-	for(int i = 0; i < m_num; i++)
+	for(int i = 0; i < m_numParticles; i++)
 	{
 		if (isAlive[i] > 0.5)
 		{
@@ -315,7 +315,7 @@ void SPH::sphCalc()
 
 void SPH::integration()
 {
-	for(int i = 0; i < m_num; i++)
+	for(int i = 0; i < m_numParticles; i++)
 	{
 		if(aliveHelper[i] == 1)
 		isAlive[i] = 1.0;
@@ -427,7 +427,7 @@ void SPH::render()
 	glEnable(GL_POINT_SMOOTH);
 	glEnable(GL_PROGRAM_POINT_SIZE);
 	
-	glDrawArrays(GL_POINTS, 0, m_num);
+	glDrawArrays(GL_POINTS, 0, m_numParticles);
 }
 
 void SPH::setBuoyancy(float b)

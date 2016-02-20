@@ -7,7 +7,7 @@ CLsph::CLsph(float delta, float radius, float r0, int num)
 	printf("Initialize OpenCL Object and context \n");
 
 	//normal sph
-	m_num = num;
+	m_numParticles = num;
 	dt = delta; 
 	smoothingLength = radius; 
 	rho0 = r0;
@@ -21,20 +21,20 @@ CLsph::CLsph(float delta, float radius, float r0, int num)
 
 	printf("Constants: \n dt = %f \n smoothingLength = %f \n poly6 = %f \n spiky = %f \n visConst = %f \n", 
 		   dt, smoothingLength, poly6, spiky, visConst);
-	printf("Number of Particles = %d \n", m_num);
+	printf("Number of Particles = %d \n", m_numParticles);
 
-	pos.resize(m_num);
-	vel.resize(m_num);
-	life.resize(m_num);
-	rndmSprite.resize(m_num);
-	isAlive.resize(m_num);
-	aliveHelper.resize(m_num);
-	neighbours.resize(m_num*50);
-	counter.resize(m_num);
-	density.resize(m_num);
-	pressure.resize(m_num);
-	mass.resize(m_num);
-	forceIntern.resize(m_num);
+	pos.resize(m_numParticles);
+	vel.resize(m_numParticles);
+	life.resize(m_numParticles);
+	rndmSprite.resize(m_numParticles);
+	isAlive.resize(m_numParticles);
+	aliveHelper.resize(m_numParticles);
+	neighbours.resize(m_numParticles*50);
+	counter.resize(m_numParticles);
+	density.resize(m_numParticles);
+	pressure.resize(m_numParticles);
+	mass.resize(m_numParticles);
+	forceIntern.resize(m_numParticles);
 
 	std::vector<cl::Platform> platforms;
 	m_err = cl::Platform::get(&platforms);
@@ -138,7 +138,7 @@ void CLsph::init(int mode)
 	switch (mode)
 	{
 	case 1: //chimney
-		for (int i = 0; i <m_num; i++)
+		for (int i = 0; i <m_numParticles; i++)
 		{
 			x = rand_float(-0.125,0.125);
 			z = rand_float(-0.125,0.125);
@@ -156,7 +156,7 @@ void CLsph::init(int mode)
 		break;
 
 	case 2: // big chimney
-		for (int i = 0; i <m_num; i++)
+		for (int i = 0; i <m_numParticles; i++)
 		{
 			x = rand_float(-0.225,0.225);
 			z = rand_float(-0.225,0.225);
@@ -174,7 +174,7 @@ void CLsph::init(int mode)
 		break;
 
 	case 3: //side
-		for (int i = 0; i <m_num; i++)
+		for (int i = 0; i <m_numParticles; i++)
 		{
 			x = rand_float(-0.75,-0.5);
 			z = rand_float(-0.125,0.125);
@@ -191,7 +191,7 @@ void CLsph::init(int mode)
 		break;
 	
 	case 4: //two sources (chimney)
-		for (int i = 0; i <m_num; i++)
+		for (int i = 0; i <m_numParticles; i++)
 		{
 
 			if(i % 2 == 0)
@@ -226,7 +226,7 @@ void CLsph::init(int mode)
 		break;
 	
 	case 5: // two sources (side)
-		for (int i = 0; i <m_num; i++)
+		for (int i = 0; i <m_numParticles; i++)
 		{
 			if(i % 2 == 0)
 			{
@@ -260,7 +260,7 @@ void CLsph::init(int mode)
 		break;
 	}
 
-	for (int i = 0; i <m_num; i++)
+	for (int i = 0; i <m_numParticles; i++)
 	{
 		life[i] = rand_float(0.0f,1.0f);
 		rndmSprite[i] = float(i % 10);
@@ -283,7 +283,7 @@ void CLsph::init(int mode)
 
 void CLsph::reset()
 {
-	for (int i = 0; i <m_num; i++)
+	for (int i = 0; i <m_numParticles; i++)
 	{
 		pos[i] = glm::vec4(0.0,0.0,0.0,1.0f);
 		vel[i] = glm::vec4(0.0,0.0,0.0,0.0f);
@@ -303,11 +303,11 @@ void CLsph::loadData()
 {
 	printf("LOAD DATA \n");
 	//store number of particles and the size of bytes of our arrays
-	m_num = pos.size();
-	array_size = m_num * sizeof(glm::vec4);
-	extended_int_size = m_num * sizeof(int) * 50;
-	int_size = m_num * sizeof(int);
-	float_size = m_num * sizeof(float);
+	m_numParticles = pos.size();
+	array_size = m_numParticles * sizeof(glm::vec4);
+	extended_int_size = m_numParticles * sizeof(int) * 50;
+	int_size = m_numParticles * sizeof(int);
+	float_size = m_numParticles * sizeof(float);
 	
 	//create VBO's (util.cpp)
 	p_vbo = createVBO(&pos[0], array_size, 4, 0); 
@@ -360,17 +360,17 @@ void CLsph::loadData()
 
 void CLsph::updateData(std::vector<int> aliveHelper)
 {
-	int_size = m_num * sizeof(int);
+	int_size = m_numParticles * sizeof(int);
 	m_err = m_queue.enqueueWriteBuffer(cl_isAliveHelper, CL_TRUE,0, int_size, &aliveHelper[0], NULL, &m_event);
 	m_queue.finish();
 }
 
 void CLsph::updateData()
 {
-	int_size = m_num * sizeof(int);
-	array_size = m_num * sizeof(glm::vec4);
-	extended_int_size = m_num * sizeof(int) * 50;
-	float_size = m_num * sizeof(float);
+	int_size = m_numParticles * sizeof(int);
+	array_size = m_numParticles * sizeof(glm::vec4);
+	extended_int_size = m_numParticles * sizeof(int) * 50;
+	float_size = m_numParticles * sizeof(float);
 
 	m_err = m_queue.enqueueWriteBuffer(cl_velocities, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
 	//m_err = m_queue.enqueueWriteBuffer(cl_pos_gen, CL_TRUE,0, array_size, &pos[0], NULL, &m_event);
@@ -569,22 +569,22 @@ void CLsph::runKernel(int kernelnumber)
 	//0 == Neighbours
 	if(kernelnumber == 0)
 	{
-		m_err = m_queue.enqueueNDRangeKernel(m_NeighboursKernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event); // zweites Nullrange für local
+		m_err = m_queue.enqueueNDRangeKernel(m_NeighboursKernel, cl::NullRange, cl::NDRange(m_numParticles),cl::NullRange, NULL, &m_event); // zweites Nullrange für local
 	}
 	//1 == Density
 	if(kernelnumber == 1)
 	{
-		m_err = m_queue.enqueueNDRangeKernel(m_DensityKernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
+		m_err = m_queue.enqueueNDRangeKernel(m_DensityKernel, cl::NullRange, cl::NDRange(m_numParticles),cl::NullRange, NULL, &m_event);
 	}
 	//2 == SPH
 	if(kernelnumber == 2)
 	{
-		m_err = m_queue.enqueueNDRangeKernel(m_SphKernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
+		m_err = m_queue.enqueueNDRangeKernel(m_SphKernel, cl::NullRange, cl::NDRange(m_numParticles),cl::NullRange, NULL, &m_event);
 	}
 	//3 == Integration
 	if(kernelnumber == 3)
 	{
-		m_err = m_queue.enqueueNDRangeKernel(m_IntegrationKernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
+		m_err = m_queue.enqueueNDRangeKernel(m_IntegrationKernel, cl::NullRange, cl::NDRange(m_numParticles),cl::NullRange, NULL, &m_event);
 	}
 	
 	try{
@@ -603,8 +603,8 @@ void CLsph::runKernel(int kernelnumber)
 		//
 		//	if(kernelnumber == 0)
 		//	{
-		//	int* new_neighbours = new int[m_num*50];
-		//	m_err = m_queue.enqueueReadBuffer(cl_neighbours, CL_TRUE, 0, sizeof(int)*m_num*50, new_neighbours, NULL, &m_event);
+		//	int* new_neighbours = new int[m_numParticles*50];
+		//	m_err = m_queue.enqueueReadBuffer(cl_neighbours, CL_TRUE, 0, sizeof(int)*m_numParticles*50, new_neighbours, NULL, &m_event);
 
 		//	for(int i =0 ; i < 1000; i++)
 		//	{
@@ -615,8 +615,8 @@ void CLsph::runKernel(int kernelnumber)
 
 		/*if(kernelnumber == 1)
 		{
-		float* new_density = new float[m_num];
-		m_err = m_queue.enqueueReadBuffer(cl_density, CL_TRUE, 0, sizeof(float)*m_num, new_density, NULL, &m_event);
+		float* new_density = new float[m_numParticles];
+		m_err = m_queue.enqueueReadBuffer(cl_density, CL_TRUE, 0, sizeof(float)*m_numParticles, new_density, NULL, &m_event);
 
 		for(int i =0 ; i < 1000; i++)
 		{
@@ -627,8 +627,8 @@ void CLsph::runKernel(int kernelnumber)
 
 		//if(kernelnumber == 1)
 		//	{
-		//	float* new_pressure = new float[m_num];
-		//	m_err = m_queue.enqueueReadBuffer(cl_pressure, CL_TRUE, 0, sizeof(float)*m_num, new_pressure, NULL, &m_event);
+		//	float* new_pressure = new float[m_numParticles];
+		//	m_err = m_queue.enqueueReadBuffer(cl_pressure, CL_TRUE, 0, sizeof(float)*m_numParticles, new_pressure, NULL, &m_event);
 
 		//	for(int i =0 ; i < 1000; i++)
 		//	{
@@ -647,7 +647,7 @@ void CLsph::render()
 	glEnable(GL_POINT_SPRITE);
 	glEnable(GL_PROGRAM_POINT_SIZE);
 	
-	glDrawArrays(GL_POINTS, 0, m_num);
+	glDrawArrays(GL_POINTS, 0, m_numParticles);
 }
 
 void CLsph::setBuoyancy(float b)

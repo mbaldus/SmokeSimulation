@@ -33,7 +33,7 @@ class SPH
 		float rho0;
 		float buoyancy;
 		float lifeDeduction;
-		int m_num; //number of particles
+		int m_numParticles; //number of particles
 		
 		int p_vbo; //position VBO
 		int life_vbo; //life VBO
@@ -56,7 +56,7 @@ class SPH
 
 		size_t array_size; //the size of our arrays num * sizeof(Vec4)
 		size_t float_size;
-		size_t int_size; //(m_num)
+		size_t int_size; //(m_numParticles)
 		size_t extended_int_size; //size of particles amount * count of saved neighbours per particle
 
 		//default constructor initializes OpenCL Context and chooses platform and device

@@ -99,8 +99,8 @@ void CLparticles::loadProgram(std::string kernel_source)
 void CLparticles::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel) //, std::vector<glm::vec4> col)
 {
 	//store number of particles and the size of bytes of our arrays
-	m_num = pos.size();
-	array_size = m_num * sizeof(glm::vec4);
+	m_numParticles = pos.size();
+	array_size = m_numParticles * sizeof(glm::vec4);
 	
 	//create VBO's (util.cpp)
 	p_vbo = createVBO(&pos[0], array_size, 4, 0); //id 1
@@ -176,7 +176,7 @@ void CLparticles::runKernel()
 	float dt = 0.003f;
 	m_kernel.setArg(5, dt); //pass the timestamp
 	//execute the kernel
-	m_err = m_queue.enqueueNDRangeKernel(m_kernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
+	m_err = m_queue.enqueueNDRangeKernel(m_kernel, cl::NullRange, cl::NDRange(m_numParticles),cl::NullRange, NULL, &m_event);
 	m_queue.finish();
 	
 	//release the vbos so OpenGL can play with them
@@ -201,7 +201,7 @@ void CLparticles::runKernel(int reverse)
 	m_kernel.setArg(4, dt); //pass the timestamp
 	m_kernel.setArg(5, reverse);
 	//execute the kernel
-	m_err = m_queue.enqueueNDRangeKernel(m_kernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
+	m_err = m_queue.enqueueNDRangeKernel(m_kernel, cl::NullRange, cl::NDRange(m_numParticles),cl::NullRange, NULL, &m_event);
 	m_queue.finish();
 	
 	//release the vbos so OpenGL can play with them
@@ -221,7 +221,7 @@ void CLparticles::render()
 	glBindBuffer(GL_ARRAY_BUFFER, p_vbo); //p_vbo is 0
 	//glEnableVertexAttribArray(0);
 	
-	glDrawArrays(GL_POINTS, 0, m_num);
+	glDrawArrays(GL_POINTS, 0, m_numParticles);
 
 }
 

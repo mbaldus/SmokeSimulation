@@ -115,11 +115,11 @@ void CLsphOld::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel, 
 {
 	printf("LOAD DATA \n");
 	//store number of particles and the size of bytes of our arrays
-	m_num = pos.size();
-	array_size = m_num * sizeof(glm::vec4);
-	int_size = m_num * sizeof(int) * 50;
-	normal_int_size = m_num * sizeof(int);
-	float_size = m_num * sizeof(float);
+	m_numParticles = pos.size();
+	array_size = m_numParticles * sizeof(glm::vec4);
+	int_size = m_numParticles * sizeof(int) * 50;
+	normal_int_size = m_numParticles * sizeof(int);
+	float_size = m_numParticles * sizeof(float);
 	
 	//create VBO's (util.cpp)
 	p_vbo = createVBO(&pos[0], array_size, 4, 0); //id 1
@@ -326,22 +326,22 @@ void CLsphOld::runKernel(int kernelnumber)
 	//0 == Neighbours
 	if(kernelnumber == 0)
 	{
-		m_err = m_queue.enqueueNDRangeKernel(m_NeighboursKernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
+		m_err = m_queue.enqueueNDRangeKernel(m_NeighboursKernel, cl::NullRange, cl::NDRange(m_numParticles),cl::NullRange, NULL, &m_event);
 	}
 	//1 == Density
 	if(kernelnumber == 1)
 	{
-		m_err = m_queue.enqueueNDRangeKernel(m_DensityKernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
+		m_err = m_queue.enqueueNDRangeKernel(m_DensityKernel, cl::NullRange, cl::NDRange(m_numParticles),cl::NullRange, NULL, &m_event);
 	}
 	//2 == SPH
 	if(kernelnumber == 2)
 	{
-		m_err = m_queue.enqueueNDRangeKernel(m_SphKernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
+		m_err = m_queue.enqueueNDRangeKernel(m_SphKernel, cl::NullRange, cl::NDRange(m_numParticles),cl::NullRange, NULL, &m_event);
 	}
 	//3 == Integration
 	if(kernelnumber == 3)
 	{
-		m_err = m_queue.enqueueNDRangeKernel(m_IntegrationKernel, cl::NullRange, cl::NDRange(m_num),cl::NullRange, NULL, &m_event);
+		m_err = m_queue.enqueueNDRangeKernel(m_IntegrationKernel, cl::NullRange, cl::NDRange(m_numParticles),cl::NullRange, NULL, &m_event);
 	}
 	
 	try{
@@ -360,8 +360,8 @@ void CLsphOld::runKernel(int kernelnumber)
 		//
 		//	if(kernelnumber == 0)
 		//	{
-		//	int* new_neighbours = new int[m_num*50];
-		//	m_err = m_queue.enqueueReadBuffer(cl_neighbours, CL_TRUE, 0, sizeof(int)*m_num*50, new_neighbours, NULL, &m_event);
+		//	int* new_neighbours = new int[m_numParticles*50];
+		//	m_err = m_queue.enqueueReadBuffer(cl_neighbours, CL_TRUE, 0, sizeof(int)*m_numParticles*50, new_neighbours, NULL, &m_event);
 
 		//	for(int i =0 ; i < 1000; i++)
 		//	{
@@ -372,8 +372,8 @@ void CLsphOld::runKernel(int kernelnumber)
 
 		/*if(kernelnumber == 1)
 		{
-		float* new_density = new float[m_num];
-		m_err = m_queue.enqueueReadBuffer(cl_density, CL_TRUE, 0, sizeof(float)*m_num, new_density, NULL, &m_event);
+		float* new_density = new float[m_numParticles];
+		m_err = m_queue.enqueueReadBuffer(cl_density, CL_TRUE, 0, sizeof(float)*m_numParticles, new_density, NULL, &m_event);
 
 		for(int i =0 ; i < 1000; i++)
 		{
@@ -384,8 +384,8 @@ void CLsphOld::runKernel(int kernelnumber)
 
 		//if(kernelnumber == 1)
 		//	{
-		//	float* new_pressure = new float[m_num];
-		//	m_err = m_queue.enqueueReadBuffer(cl_pressure, CL_TRUE, 0, sizeof(float)*m_num, new_pressure, NULL, &m_event);
+		//	float* new_pressure = new float[m_numParticles];
+		//	m_err = m_queue.enqueueReadBuffer(cl_pressure, CL_TRUE, 0, sizeof(float)*m_numParticles, new_pressure, NULL, &m_event);
 
 		//	for(int i =0 ; i < 1000; i++)
 		//	{
@@ -408,6 +408,6 @@ void CLsphOld::render()
 	glBindBuffer(GL_ARRAY_BUFFER, p_vbo); //p_vbo is 0
 	//glEnableVertexAttribArray(0);
 	
-	glDrawArrays(GL_POINTS, 0, m_num);
+	glDrawArrays(GL_POINTS, 0, m_numParticles);
 }
 
