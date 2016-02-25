@@ -354,37 +354,37 @@ void SPH::integration()
 		float bDamp = -0.9;
 	
 		//boundarys
-		if(p_old.y < -0.5)
+		if(p_new.y < -0.5)
 		{
 			v_new.y *= bDamp;
 			p_new.y = -0.5f;
 		}	
 	
-		if(p_old.y > 2)
+		if(p_new.y > 2)
 		{
 			v_new.y *= bDamp ;
 			p_new.y = 2;
 		}
 
-		if(p_old.x > 1)
+		if(p_new.x > 1)
 		{
 			v_new.x *= bDamp;
 			p_new.x = 1;
 		}
 
-		if(p_old.x < -1.0)
+		if(p_new.x < -1.0)
 		{
 			v_new.x *= bDamp;
 			p_new.x = -1.0f;
 		}
 
-		if(p_old.z > 1)
+		if(p_new.z > 1)
 		{
 			v_new.z *= bDamp;
 			p_new.z = 1;
 		}
 
-		if(p_old.z < -1)
+		if(p_new.z < -1)
 		{
 			v_new.z *= bDamp;
 			p_new.z = -1.f;
