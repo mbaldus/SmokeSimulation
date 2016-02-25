@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 8192
+#define NUM_PARTICLES 11000
 
 #define NEIGHBOURS 0
 #define DENSITY 1
@@ -89,13 +89,14 @@ int main(void) {
 	float time_spent = 0.0f;
 	float max_time_spent = 0.0f;
 	float average_time = 0.0f;
-
+	int wind = 0;
 	std::function<void(double)> loop = 
 		[&sph,
 		&shaderprogram,
 		&trackball,
 		&model,
 		&view, &framecount, &frameoffset,
+		&wind,
 		&time_spent, &max_time_spent, &average_time,
 		&window](double deltatime)
 	{
@@ -110,14 +111,12 @@ int main(void) {
 		trackball.update(window,view);
 		shaderprogram->update("view", view);
 		
-	/*	if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) == GLFW_PRESS)
+		if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) == GLFW_PRESS)
 		{
-			sph->reset();
-			sph->updateData();
-			sph->init(3);
-			sph->updateData();
-			framecount=0;
-		}*/
+			wind = 1;
+		}else {
+			wind = 0;
+		}
 
 		if (framecount * frameoffset <= NUM_PARTICLES)
 		{
@@ -136,7 +135,7 @@ int main(void) {
 		sph->runKernel(NEIGHBOURS);  //0 == Nachbarschaftssuche
 		sph->runKernel(DENSITY);	 //1 == Dichte und Druckberechnung
 		sph->runKernel(SPH);		 //2 == Sph
-		sph->runKernel(INTEGRATION); //3 == Integration
+		sph->runKernel(INTEGRATION,wind); //3 == Integration
 
 		//Timer
 		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;

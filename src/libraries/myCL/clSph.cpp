@@ -552,7 +552,7 @@ void CLsph::genIntegrationKernel()
 	printf("######################################################\n");
 }
 
-void CLsph::runKernel(int kernelnumber)
+void CLsph::runKernel(int kernelnumber, int mousefun)
 {
 
 	//update the system by calculating new velocities and updating positions of particles
@@ -585,6 +585,7 @@ void CLsph::runKernel(int kernelnumber)
 	//3 == Integration
 	if(kernelnumber == 3)
 	{
+		m_IntegrationKernel.setArg(15, mousefun);
 		m_err = m_queue.enqueueNDRangeKernel(m_IntegrationKernel, cl::NullRange, cl::NDRange(m_numParticles),cl::NullRange, NULL, &m_event);
 	}
 	

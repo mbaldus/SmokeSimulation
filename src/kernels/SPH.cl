@@ -111,7 +111,7 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
 }
 
 __kernel void integration(__global float4* pos,  __global float4* vel, __global float4* pos_gen, __global float4* vel_gen, __global float* life_gen, __global float* life, __global float* density,
-						  __global float* mass, __global float4* forceIntern, float rho0, float dt, __global float* isAlive, __global int* aliveHelper, float buoyancy, float lifeDeduction)
+						  __global float* mass, __global float4* forceIntern, float rho0, float dt, __global float* isAlive, __global int* aliveHelper, float buoyancy, float lifeDeduction, int wind)
 {
     unsigned int i = get_global_id(0);
 	
@@ -134,20 +134,24 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
         life[i] = 1;    
     }	
 
-	//float gravityForce = -9.81f * mass[i];
+	float3 windForce =(0.0,0.0,0.0)*mass[i];
 	float gravityForce = buoyancy * (density[i] - rho0) * -9.81f * mass[i];
+	if (wind==1)
+		windForce = (3.0,0.2,2.0)*mass[i];
 
-	//apply intern forces and extern forces
-	v_new.x = v_old.x + (forceIntern[i].x/mass[i]) * dt;
-	v_new.y = v_old.y + ((forceIntern[i].y + gravityForce)/mass[i]) * dt;
-	v_new.z = v_old.z + (forceIntern[i].z/mass[i]) * dt;
+	float3 forceExtern;
+	forceExtern.x = windForce.x;
+	forceExtern.y = windForce.y + gravityForce;
+	forceExtern.z = windForce.z;
+	
+	//integration of velocity
+	v_new.xyz = v_old.xyz + ((forceIntern[i].xyz + forceExtern.xyz)/mass[i]) * dt;
 
-	//compute new position with computed velocity
+	//integration of position
 	p_new.xyz = p_old.xyz + v_new.xyz * dt ;
 
-//	float bDamp = -1.2;
+	//boundary damping
 	float bDamp = -0.9;
-	
 	//boundarys
 	if(p_new.y < -0.5)
 	{
@@ -155,7 +159,7 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 		p_new.y = -0.5f;
 	}	
 	
-	if(p_new.y > 2)
+	if(p_new.y > 200)
 	{
 		v_new.y *= bDamp ;
 		p_new.y = 2;

@@ -95,7 +95,7 @@ class CLsph
 		void genIntegrationKernel();
 
 		//execute the kernel
-		void runKernel(int kernelnumber);
+		void runKernel(int kernelnumber,int mousefun=0);
 
 		//render function
 		void render();
