@@ -567,6 +567,7 @@ void CLsph::runKernel(int kernelnumber)
 	int localKernelSize = 16;
 	//execute the kernel
 	//0 == Neighbours
+	
 	if(kernelnumber == 0)
 	{
 		m_err = m_queue.enqueueNDRangeKernel(m_NeighboursKernel, cl::NullRange, cl::NDRange(m_numParticles),cl::NullRange, NULL, &m_event); // zweites Nullrange für local
