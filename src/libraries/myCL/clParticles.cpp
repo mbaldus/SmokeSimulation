@@ -59,18 +59,18 @@ CLparticles::~CLparticles()
 {
 }
 
-void CLparticles::loadProgram(std::string kernel_source)
+void CLparticles::loadProgram(std::string kernelFile)
 {
 	//Program Setup
 	int program_length;
 
 	printf("load the program \n");
-	program_length = kernel_source.size();
+	program_length = kernelFile.size();
 	printf("kernel size %d\n" ,program_length);
 
 	try
 	{
-		cl::Program::Sources source (1,  std::make_pair(kernel_source.c_str(), program_length));
+		cl::Program::Sources source (1,  std::make_pair(kernelFile.c_str(), program_length));
 		m_program = cl::Program(m_context, source);
 		printf("build program\n");
 	}catch(cl::Error er)

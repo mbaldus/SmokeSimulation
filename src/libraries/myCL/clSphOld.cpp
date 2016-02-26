@@ -74,18 +74,18 @@ CLsphOld::~CLsphOld()
 {
 }
 
-void CLsphOld::loadProgram(std::string kernel_source)
+void CLsphOld::loadProgram(std::string kernelFile)
 {
 	//Program Setup
 	int program_length;
 
 	printf("LOAD SPH PROGRAM \n");
-	program_length = kernel_source.size();
+	program_length = kernelFile.size();
 	printf("kernel size %d\n" ,program_length);
 
 	try
 	{
-		cl::Program::Sources source (1,  std::make_pair(kernel_source.c_str(), program_length));
+		cl::Program::Sources source (1,  std::make_pair(kernelFile.c_str(), program_length));
 		m_program = cl::Program(m_context, source);
 		printf("build sph program\n");
 	}catch(cl::Error er)
@@ -191,33 +191,33 @@ void CLsphOld::genNeighboursKernel()
 	printf("######################################################\n");
 }
 
-void CLsphOld::genDensityKernel()
+void CLsphOld::genDensityPressureKernel()
 {
-	printf("genDensityKernel\n");
+	printf("genDensityPressureKernel\n");
 	
 
 	//initialize our kernel from the program
 	try
 	{
 		//name of the string must be same as defined in the cl.file
-		m_DensityKernel = cl::Kernel(m_program, "densityCalc", &m_err);
+		m_DensityPressureKernel = cl::Kernel(m_program, "densityPressureCalc", &m_err);
 	}catch(cl::Error er)
 	{
 		printf("Error: %s(%d)\n", er.what(), er.err()); 
 	}
-	printf("generated densityCalculation kernel\n");
+	printf("generated densityPressureCalculation kernel\n");
 	//set the arguments of the kernel
 	try
 	{
-		m_err = m_DensityKernel.setArg(0,cl_vbos[0]);
-		m_err = m_DensityKernel.setArg(1,cl_neighbours);
-		m_err = m_DensityKernel.setArg(2,cl_counter);
-		m_err = m_DensityKernel.setArg(3,cl_density);
-		m_err = m_DensityKernel.setArg(4,cl_pressure);
-		m_err = m_DensityKernel.setArg(5,cl_mass);
-		m_err = m_DensityKernel.setArg(6,smoothingLength);
-		m_err = m_DensityKernel.setArg(7,poly6);
-		m_err = m_DensityKernel.setArg(8,rho0);
+		m_err = m_DensityPressureKernel.setArg(0,cl_vbos[0]);
+		m_err = m_DensityPressureKernel.setArg(1,cl_neighbours);
+		m_err = m_DensityPressureKernel.setArg(2,cl_counter);
+		m_err = m_DensityPressureKernel.setArg(3,cl_density);
+		m_err = m_DensityPressureKernel.setArg(4,cl_pressure);
+		m_err = m_DensityPressureKernel.setArg(5,cl_mass);
+		m_err = m_DensityPressureKernel.setArg(6,smoothingLength);
+		m_err = m_DensityPressureKernel.setArg(7,poly6);
+		m_err = m_DensityPressureKernel.setArg(8,rho0);
 
 	}catch(cl::Error er)
 	{
@@ -331,7 +331,7 @@ void CLsphOld::runKernel(int kernelnumber)
 	//1 == Density
 	if(kernelnumber == 1)
 	{
-		m_err = m_queue.enqueueNDRangeKernel(m_DensityKernel, cl::NullRange, cl::NDRange(m_numParticles),cl::NullRange, NULL, &m_event);
+		m_err = m_queue.enqueueNDRangeKernel(m_DensityPressureKernel, cl::NullRange, cl::NDRange(m_numParticles),cl::NullRange, NULL, &m_event);
 	}
 	//2 == SPH
 	if(kernelnumber == 2)

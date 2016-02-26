@@ -17,7 +17,7 @@
 #include <GL/ShaderProgram.h>
 #include <GL/Texture.h>
  
-
+static bool paused = false;
 void loadAndBindTextures(Texture* textures[], ShaderProgram* shaderprogram)
 {
 	textures[0] = new Texture(TEXTURES_PATH "/smoke10.png");
@@ -40,6 +40,13 @@ void loadAndBindTextures(Texture* textures[], ShaderProgram* shaderprogram)
 	}
 }
 
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if (key == GLFW_KEY_P && action == GLFW_PRESS )
+		paused = !paused;
+}
+
+
 int main(void) {
 	printf("OpenCL Version SPH\n");
 	
@@ -49,7 +56,7 @@ int main(void) {
 	Trackball trackball(GLTools::getWidth(window),GLTools::getHeight(window));
 
 	int num = NUM_PARTICLES;
-	CLsph* sph = new CLsph(0.00375f,0.05f,0.59,num);
+	CLsph* sph = new CLsph(0.00375f,0.05,0.59,num);
     
 	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPH.cl");
     sph->loadProgram(kernel_source);
@@ -70,7 +77,7 @@ int main(void) {
 	ShaderProgram* shaderprogram = new ShaderProgram("/smoke.vert", "/smokeSprite.frag");
 
 	glm::mat4 model = glm::mat4(1.0f);
-	glm::mat4 view = glm::lookAt(glm::vec3(0.0f,-0.1f,1.0f),glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,1.0f,0.0f));
+	glm::mat4 view = glm::lookAt(glm::vec3(0.0f,-0.1f,1.0f),glm::vec3(0.0f,1.0f,0.0f), glm::vec3(0.0f,1.0f,0.0f));
 	glm::mat4 projection = glm::perspective(45.f, GLTools::getRatio(window), 0.1f, 100.f);
 	shaderprogram->update("model",model);
 	shaderprogram->update("view",view);
@@ -90,6 +97,9 @@ int main(void) {
 	float max_time_spent = 0.0f;
 	float average_time = 0.0f;
 	int wind = 0;
+
+	glfwSetKeyCallback(window, key_callback);
+
 	std::function<void(double)> loop = 
 		[&sph,
 		&shaderprogram,
@@ -100,6 +110,7 @@ int main(void) {
 		&time_spent, &max_time_spent, &average_time,
 		&window](double deltatime)
 	{
+		if(!paused){
 		glEnable(GL_DEPTH_TEST);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -157,6 +168,7 @@ int main(void) {
 
 		glDepthMask(GL_TRUE);
 		glDisable(GL_BLEND);
+		}
 	};
 	GLTools::render(window, loop);
 

@@ -42,7 +42,7 @@ class CLparticles
 
 		//load OpenCL program from a file
 		//pass in the kernel source code as a string. 
-		void loadProgram(std::string kernel_source);
+		void loadProgram(std::string kernelFile);
 
 		//setup the data for the kernel
 		void loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> vel);//, std::vector<glm::vec4> color);

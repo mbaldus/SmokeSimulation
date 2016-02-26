@@ -29,8 +29,8 @@ int main(void) {
 	
 	CLsphOld* sph = new CLsphOld();
     
-	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPHwater.cl");
-    sph->loadProgram(kernel_source);
+	std::string kernelFile = loadfromfile(KERNELS_PATH "/SPHwater.cl");
+    sph->loadProgram(kernelFile);
 
 	//initialize our particle system with positions, velocities and color
 	int num = NUM_PARTICLES;
@@ -78,7 +78,7 @@ int main(void) {
 	
 	sph->loadData(pos,vel,neighbours,counter,density,pressure,viscosity,mass,forceIntern); 
 	sph->genNeighboursKernel();
-	sph->genDensityKernel();
+	sph->genDensityPressureKernel();
 	sph->genIntegrationKernel();
 	sph->genSPHKernel();
 

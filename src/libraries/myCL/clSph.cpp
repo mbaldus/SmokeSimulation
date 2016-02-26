@@ -129,7 +129,7 @@ void CLsph::loadProgram(std::string kernel_source)
 
 void CLsph::init(int mode)
 {
-	if(mode < 1 || mode > 4)
+	if(mode < 1 || mode > 5)
 		mode = 1;
 
 	float x,y,z;
@@ -142,7 +142,7 @@ void CLsph::init(int mode)
 		{
 			x = rand_float(-0.125,0.125);
 			z = rand_float(-0.125,0.125);
-			y = rand_float(0.125,0.25);
+			y = rand_float(0.125,0.25)-2.0f;
 			pos[i] = glm::vec4(x,y,z,1.0f);
 
 			rand_x = rand_float(-0.2,0.2);
@@ -160,33 +160,33 @@ void CLsph::init(int mode)
 		{
 			x = rand_float(-0.225,0.225);
 			z = rand_float(-0.225,0.225);
-			y = rand_float(0,0.25);
+			y = rand_float(0,0.25)-2.0f;
 			pos[i] = glm::vec4(x,y,z,1.0f);
 
-			rand_x = rand_float(-0.2,0.2);
+			rand_x = rand_float(-1.0,1.0);
 			rand_y = rand_float(0.3,2.5);
-			rand_z = rand_float(-0.2,0.2);
+			rand_z = rand_float(-1.0,1.0);
 			vel[i] = glm::vec4(rand_x,rand_y,rand_z,0);
 		
-			setBuoyancy(50.0f);
-			setLifeDeduction(0.25);
+			setBuoyancy(25.f);
+			setLifeDeduction(0.35);
 		}
 		break;
 
 	case 3: //side
 		for (int i = 0; i <m_numParticles; i++)
 		{
-			x = rand_float(-0.75,-0.5);
-			z = rand_float(-0.125,0.125);
-			y = rand_float(0.25,0.5);
+			x = rand_float(-0.75,-0.25);
+			z = rand_float(-0.25,0.25);
+			y = rand_float(0.0,0.5)-1.5;
 			pos[i] = glm::vec4(x,y,z,1.0f);
 
 			rand_x = rand_float(0.5,3);
 			rand_y = rand_float(0.25,1.5);
 			vel[i] = glm::vec4(rand_x,rand_y,0,0);
 		
-			setBuoyancy(1.5f);
-			setLifeDeduction(0.25);
+			setBuoyancy(5.5f);
+			setLifeDeduction(0.35);
 		}
 		break;
 	
@@ -232,7 +232,7 @@ void CLsph::init(int mode)
 			{
 			x = rand_float(-0.9,-0.75);
 			z = rand_float(-0.25,0.25);
-			y = rand_float(-0.40,-0.10);
+			y = rand_float(-0.40,-0.10)-1;
 			pos[i] = glm::vec4(x,y,z,1.0f);
 		 
 			rand_x = rand_float(1.0,4.5);
@@ -243,9 +243,9 @@ void CLsph::init(int mode)
 			}
 			else if (i % 2 == 1)
 			{
-			x = rand_float(0.70,0.9);
+			x = rand_float(0.70,0.9)+0.5;
 			z = rand_float(-0.25,0.25);
-			y = rand_float(-0.40,-0.10);
+			y = rand_float(-0.40,-0.10)-1;
 			pos[i] = glm::vec4(x,y,z,1.0f);
 
 			rand_x = rand_float(1.1,4.5);
@@ -386,7 +386,7 @@ void CLsph::updateData()
 void CLsph::genKernels()
 {
 	genNeighboursKernel();
-	genDensityKernel();
+	genDensityPressureKernel();
 	genSPHKernel();
 	genIntegrationKernel();
 }
@@ -425,34 +425,34 @@ void CLsph::genNeighboursKernel()
 	printf("######################################################\n");
 }
 
-void CLsph::genDensityKernel()
+void CLsph::genDensityPressureKernel()
 {
-	printf("genDensityKernel\n");
+	printf("genDensityPressureKernel\n");
 	
 
 	//initialize our kernel from the program
 	try
 	{
 		//name of the string must be same as defined in the cl.file
-		m_DensityKernel = cl::Kernel(m_program, "densityCalc", &m_err);
+		m_DensityPressureKernel = cl::Kernel(m_program, "densityPressureCalc", &m_err);
 	}catch(cl::Error er)
 	{
 		printf("Error: %s(%d)\n", er.what(), er.err()); 
 	}
-	printf("generated densityCalculation kernel\n");
+	printf("generated densityPressureCalculation kernel\n");
 	//set the arguments of the kernel
 	try
 	{
-		m_err = m_DensityKernel.setArg(0,cl_vbos[0]);
-		m_err = m_DensityKernel.setArg(1,cl_neighbours);
-		m_err = m_DensityKernel.setArg(2,cl_counter);
-		m_err = m_DensityKernel.setArg(3,cl_vbos[2]); //density
-		m_err = m_DensityKernel.setArg(4,cl_pressure);
-		m_err = m_DensityKernel.setArg(5,cl_mass);
-		m_err = m_DensityKernel.setArg(6,smoothingLength);
-		m_err = m_DensityKernel.setArg(7,poly6);
-		m_err = m_DensityKernel.setArg(8,rho0);
-		m_err = m_DensityKernel.setArg(9,cl_vbos[4]); //alive
+		m_err = m_DensityPressureKernel.setArg(0,cl_vbos[0]);
+		m_err = m_DensityPressureKernel.setArg(1,cl_neighbours);
+		m_err = m_DensityPressureKernel.setArg(2,cl_counter);
+		m_err = m_DensityPressureKernel.setArg(3,cl_vbos[2]); //density
+		m_err = m_DensityPressureKernel.setArg(4,cl_pressure);
+		m_err = m_DensityPressureKernel.setArg(5,cl_mass);
+		m_err = m_DensityPressureKernel.setArg(6,smoothingLength);
+		m_err = m_DensityPressureKernel.setArg(7,poly6);
+		m_err = m_DensityPressureKernel.setArg(8,rho0);
+		m_err = m_DensityPressureKernel.setArg(9,cl_vbos[4]); //alive
 
 	}catch(cl::Error er)
 	{
@@ -575,7 +575,7 @@ void CLsph::runKernel(int kernelnumber, int mousefun)
 	//1 == Density
 	if(kernelnumber == 1)
 	{
-		m_err = m_queue.enqueueNDRangeKernel(m_DensityKernel, cl::NullRange, cl::NDRange(m_numParticles),cl::NullRange, NULL, &m_event);
+		m_err = m_queue.enqueueNDRangeKernel(m_DensityPressureKernel, cl::NullRange, cl::NDRange(m_numParticles),cl::NullRange, NULL, &m_event);
 	}
 	//2 == SPH
 	if(kernelnumber == 2)

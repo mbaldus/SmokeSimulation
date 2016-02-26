@@ -46,7 +46,7 @@ __kernel void neighbours(__global float4* pos, __global int* neighbour,__global 
 	//printf("neighbour[%d] = %i:\n", 77, neighbour[77]);
 }
 
-__kernel void densityCalc(__global float4* pos, __global int* neighbour, __global int* counter, __global float* density, __global float* pressure, 
+__kernel void densityPressureCalc(__global float4* pos, __global int* neighbour, __global int* counter, __global float* density, __global float* pressure, 
 						  __global float* mass, float smoothingLength, float poly6, float rho0)
 {
 	unsigned int i = get_global_id(0);

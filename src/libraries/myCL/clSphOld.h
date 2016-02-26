@@ -59,7 +59,7 @@ class CLsphOld
 		//load OpenCL program from a file
 		//pass in the kernel source code as a string. 
 			
-		void loadProgram(std::string kernel_source);
+		void loadProgram(std::string kernelFile);
 		
 
 		//setup the data for the kernel
@@ -75,7 +75,7 @@ class CLsphOld
 
 		//setup data for the kernela
 		void genNeighboursKernel();
-		void genDensityKernel();
+		void genDensityPressureKernel();
 		void genSPHKernel();
 		void genIntegrationKernel();
 
@@ -96,7 +96,7 @@ class CLsphOld
 		cl::CommandQueue m_queue;
 		cl::Program m_program;
 		cl::Kernel m_NeighboursKernel;
-		cl::Kernel m_DensityKernel;
+		cl::Kernel m_DensityPressureKernel;
 		cl::Kernel m_SphKernel;
 		cl::Kernel m_IntegrationKernel;
 		

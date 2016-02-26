@@ -90,7 +90,7 @@ class CLsph
 		//setup data for the kernel
 		void genKernels();
 		void genNeighboursKernel();
-		void genDensityKernel();
+		void genDensityPressureKernel();
 		void genSPHKernel();
 		void genIntegrationKernel();
 
@@ -122,7 +122,7 @@ class CLsph
 		cl::CommandQueue m_queue;
 		cl::Program m_program;
 		cl::Kernel m_NeighboursKernel;
-		cl::Kernel m_DensityKernel;
+		cl::Kernel m_DensityPressureKernel;
 		cl::Kernel m_SphKernel;
 		cl::Kernel m_IntegrationKernel;
 		

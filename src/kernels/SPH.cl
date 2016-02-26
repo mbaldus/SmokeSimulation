@@ -49,7 +49,7 @@ __kernel void neighbours(__global float4* pos, __global int* neighbour,__global 
 	}
 }
 
-__kernel void densityCalc(__global float4* pos, __global int* neighbour, __global int* counter, __global float* density, __global float* pressure, 
+__kernel void densityPressureCalc(__global float4* pos, __global int* neighbour, __global int* counter, __global float* density, __global float* pressure, 
 						  __global float* mass, float smoothingLength, float poly6, float rho0, __global float* isAlive)
 {
 	unsigned int i = get_global_id(0);
@@ -153,36 +153,36 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 	//boundary damping
 	float bDamp = -0.9;
 	//boundarys
-	if(p_new.y < -0.5)
+	if(p_new.y < -5.5)
 	{
 		v_new.y *= bDamp;
-		p_new.y = -0.5f;
+		p_new.y = -5.5f;
 	}	
 	
-	if(p_new.y > 200)
+	if(p_new.y > 1.5)
 	{
 		v_new.y *= bDamp ;
-		p_new.y = 2;
+		p_new.y = 1.5;
 	}
 
-	if(p_new.x > 1){
+	if(p_new.x > 1.5){
 		v_new.x *= bDamp;
-		p_new.x = 1;
+		p_new.x = 1.5;
 	}
 
-	if(p_new.x < -1.0){
+	if(p_new.x < -1.5){
 		v_new.x *= bDamp;
-		p_new.x = -1.0f;
+		p_new.x = -1.5f;
 	}
 
-	if(p_new.z > 1){
+	if(p_new.z > 1.5){
 		v_new.z *= bDamp;
-		p_new.z = 1;
+		p_new.z = 1.5;
 	}
 
-	if(p_new.z < -1){
+	if(p_new.z < -1.5){
 		v_new.z *= bDamp;
-		p_new.z = -1.f;
+		p_new.z = -1.5f;
 	}
 
 	//global damping
