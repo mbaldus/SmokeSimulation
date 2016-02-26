@@ -33,8 +33,8 @@ SPH::SPH(float delta, float radius, float r0, int num)
 	pressure.resize(m_numParticles);
 	mass.resize(m_numParticles);
 	forceIntern.resize(m_numParticles);
-	m_pos_gen.resize(m_numParticles);
-	m_vel_gen.resize(m_numParticles);
+	m_posInit.resize(m_numParticles);
+	m_veloInit.resize(m_numParticles);
 }
 
 SPH::~SPH()
@@ -184,8 +184,8 @@ void SPH::init(int mode)
 		forceIntern[i] = glm::vec4(0,0,0,0);
 		counter[i]=0;
 
-		m_pos_gen[i] = pos[i];
-		m_vel_gen[i] = vel[i];
+		m_posInit[i] = pos[i];
+		m_veloInit[i] = vel[i];
 	
 		//set x particles alive at the beginning to avoid explosions
 		isAlive[i] = 0.0;
@@ -331,8 +331,8 @@ void SPH::integration()
 		life[i] -= lifeDeduction*dt;
 		if(life[i] <= 0)
 		  {
-		      p_old = m_pos_gen[i];
-		      v_old = m_vel_gen[i];
+		      p_old = m_posInit[i];
+		      v_old = m_veloInit[i];
 		      life[i] = 1.0;    
 		  }	
 

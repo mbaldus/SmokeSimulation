@@ -110,7 +110,7 @@ __kernel void SPH(__global float4* pos,__global float4* vel,  __global int* neig
 	}
 }
 
-__kernel void integration(__global float4* pos,  __global float4* vel, __global float4* pos_gen, __global float4* vel_gen, __global float* life_gen, __global float* life, __global float* density,
+__kernel void integration(__global float4* pos,  __global float4* vel, __global float4* posInit, __global float4* veloInit, __global float* life, __global float* density,
 						  __global float* mass, __global float4* forceIntern, float rho0, float dt, __global float* isAlive, __global int* aliveHelper, float buoyancy, float lifeDeduction, int wind)
 {
     unsigned int i = get_global_id(0);
@@ -129,8 +129,8 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 	life[i] -= lifeDeduction*dt;
 	if(life[i] <= 0)
     {
-        p_old = pos_gen[i];
-        v_old = vel_gen[i];
+        p_old = posInit[i];
+        v_old = veloInit[i];
         life[i] = 1;    
     }	
 
@@ -188,7 +188,7 @@ __kernel void integration(__global float4* pos,  __global float4* vel, __global 
 	//global damping
 	v_new.xyz *= 0.99999f;
 
-    //update the arrays with newly computed values
+    //update the arrays with computed values
     pos[i].xyz = p_new.xyz;
     vel[i].xyz = v_new.xyz;
 

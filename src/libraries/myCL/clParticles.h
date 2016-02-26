@@ -27,8 +27,8 @@ class CLparticles
 
 		std::vector<cl::Memory> cl_vbos; //0: position VBO, 1: color VBO
 		cl::Buffer cl_velocities;	//particle velocity
-		cl::Buffer cl_pos_gen;		//want to have the start points reseting particles
-		cl::Buffer cl_vel_gen;		//want to have the start velocities for reseting particles
+		cl::Buffer cl_posInit;		//want to have the start points reseting particles
+		cl::Buffer cl_veloInit;		//want to have the start velocities for reseting particles
 		
 		int p_vbo; //position VBO
 		int c_vbo; //color VBO

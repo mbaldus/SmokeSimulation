@@ -114,15 +114,15 @@ void CLparticles::loadData(std::vector<glm::vec4> pos, std::vector<glm::vec4> ve
 
 	//create OpenCL only arrays
 	cl_velocities = cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
-	cl_pos_gen =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
-	cl_vel_gen =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
+	cl_posInit =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
+	cl_veloInit =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
 
 	printf("Pushing data to the GPU \n");
 	//push CPU arrays to the GPU 
 	//data is thightly packed in std::vector starting with the adress of the first element
 	m_err = m_queue.enqueueWriteBuffer(cl_velocities, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_pos_gen, CL_TRUE,0, array_size, &pos[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_vel_gen, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_posInit, CL_TRUE,0, array_size, &pos[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_veloInit, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
 	m_queue.finish();
 }
 
@@ -147,8 +147,8 @@ void CLparticles::genKernel()
 		m_err = m_kernel.setArg(0,cl_vbos[0]);
 	//	m_err = m_kernel.setArg(1,cl_vbos[1]); //leave out color for the first, this is done by the shaders
 		m_err = m_kernel.setArg(1,cl_velocities);
-		m_err = m_kernel.setArg(2,cl_pos_gen);
-		m_err = m_kernel.setArg(3,cl_vel_gen);
+		m_err = m_kernel.setArg(2,cl_posInit);
+		m_err = m_kernel.setArg(3,cl_veloInit);
 	}catch(cl::Error er)
 	{
 		printf("ERROR: %s\n", er.what(), oclErrorString(er.err()));

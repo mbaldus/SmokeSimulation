@@ -21,8 +21,8 @@ class SPH
 
 		std::vector<int> m_vbos; //0: position VBO, 1: lifetime VBO 2: density VBO
 		
-		std::vector<glm::vec4> m_pos_gen;		//want to have the start points reseting particles
-		std::vector<glm::vec4> m_vel_gen;
+		std::vector<glm::vec4> m_posInit;		//want to have the start points reseting particles
+		std::vector<glm::vec4> m_veloInit;
 		
 		//SPH parameters and Buffers
 		float dt;

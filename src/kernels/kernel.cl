@@ -1,4 +1,4 @@
-__kernel void part2(__global float4* pos,  __global float4* vel, __global float4* pos_gen, __global float4* vel_gen, float dt, int reverse)
+__kernel void part2(__global float4* pos,  __global float4* vel, __global float4* posInit, __global float4* veloInit, float dt, int reverse)
 {
     //get our index in the array
     unsigned int i = get_global_id(0);
@@ -15,8 +15,8 @@ __kernel void part2(__global float4* pos,  __global float4* vel, __global float4
     //if the life is 0 or less we reset the particle's values back to the original values and set life to 1
     if(life <= 0)
     {
-        p = pos_gen[i];
-        v = vel_gen[i];
+        p = posInit[i];
+        v = veloInit[i];
         life = 1.0;    
     }
 

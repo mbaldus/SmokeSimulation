@@ -58,8 +58,8 @@ int main(void) {
 	int num = NUM_PARTICLES;
 	CLsph* sph = new CLsph(0.00375f,0.05,0.59,num);
     
-	std::string kernel_source = loadfromfile(KERNELS_PATH "/SPH.cl");
-    sph->loadProgram(kernel_source);
+	std::string kernelFile = loadfromfile(KERNELS_PATH "/SPH.cl");
+    sph->loadProgram(kernelFile);
 
 	//###################################################################
 	//						SPH INITILIZATION

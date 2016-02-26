@@ -4,7 +4,7 @@
 
 CLsph::CLsph(float delta, float radius, float r0, int num)
 {
-	printf("Initialize OpenCL Object and context \n");
+	printf("Init Particle Variables, OpenCL Object and shared context \n");
 
 	//normal sph
 	m_numParticles = num;
@@ -12,6 +12,7 @@ CLsph::CLsph(float delta, float radius, float r0, int num)
 	smoothingLength = radius; 
 	rho0 = r0;
 
+	//constants of sph derivatives
 	poly6 = 315/(64*PI*pow(smoothingLength,9));
 	spikyConst = -45/(PI*pow(smoothingLength,6));
 	visConst = 45/(PI*pow(smoothingLength,6));
@@ -72,7 +73,6 @@ CLsph::CLsph(float delta, float radius, float r0, int num)
 	//get Devices from Context
 	m_devices = m_context.getInfo<CL_CONTEXT_DEVICES>();
 	printf("Number of devices: %d\n", m_devices.size());
-	//print out Device Name
 	std::cout << "Device 0: "<<m_devices[0].getInfo<CL_DEVICE_NAME>()<<"\n";
 	std::cout << "Using Device 0: "<<m_devices[0].getInfo<CL_DEVICE_NAME>()<<"\n\n";
 	//create command queue
@@ -91,18 +91,15 @@ CLsph::~CLsph()
 {
 }
 
-void CLsph::loadProgram(std::string kernel_source)
+void CLsph::loadProgram(std::string kernelFile)
 {
-	//Program Setup
 	int program_length;
 
 	printf("LOAD SPH PROGRAM \n");
-	program_length = kernel_source.size();
-	printf("kernel size %d\n" ,program_length);
-
+	program_length = kernelFile.size();
 	try
 	{
-		cl::Program::Sources source (1,  std::make_pair(kernel_source.c_str(), program_length));
+		cl::Program::Sources source (1,  std::make_pair(kernelFile.c_str(), program_length));
 		m_program = cl::Program(m_context, source);
 		printf("build sph program\n");
 	}catch(cl::Error er)
@@ -118,10 +115,10 @@ void CLsph::loadProgram(std::string kernel_source)
 		printf("program.build: %s\n", oclErrorString(er.err()));
 	}
 
-	printf("done building sph program \n");
+	printf("sph program was succesfully build\n");
 	std::cout << "Build Status: " << m_program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(m_devices[0]) << std::endl;
 	std::cout << "Build Options: " << m_program.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(m_devices[0]) << std::endl;
-	std::cout << "Build LOG: " << m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_devices[0]) << std::endl;
+	std::cout << "Build Log: " << m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_devices[0]) << std::endl;
 
 	printf("######################################################\n");
 
@@ -302,14 +299,14 @@ void CLsph::reset()
 void CLsph::loadData()
 {
 	printf("LOAD DATA \n");
-	//store number of particles and the size of bytes of our arrays
+
 	m_numParticles = pos.size();
 	array_size = m_numParticles * sizeof(glm::vec4);
 	extended_int_size = m_numParticles * sizeof(int) * 50;
 	int_size = m_numParticles * sizeof(int);
 	float_size = m_numParticles * sizeof(float);
 	
-	//create VBO's (util.cpp)
+	//generate VBO's from util.cpp
 	p_vbo = createVBO(&pos[0], array_size, 4, 0); 
 	life_vbo = createVBO(&life[0], float_size, 1,1);
 	dens_vbo = createVBO(&density[0], float_size, 1, 2);
@@ -319,18 +316,17 @@ void CLsph::loadData()
 	//finish OpenGL proceedings
 	glFinish();
 
-	//create OpenCL buffer from GL VBO
+	//create OpenCL shared OpenGL (BufferGL) Buffers and push into cl_vbos vector
 	cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, p_vbo, &m_err));
 	cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, life_vbo, &m_err));
 	cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, dens_vbo, &m_err));
 	cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, rndm_vbo, &m_err));
 	cl_vbos.push_back(cl::BufferGL(m_context, CL_MEM_READ_WRITE, alive_vbo, &m_err));
 
-	//create OpenCL only arrays
+	//create Buffers which are only used by OpenCL
 	cl_velocities = cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
-	cl_pos_gen =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
-	cl_vel_gen =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
-	cl_life_gen = cl::Buffer(m_context, CL_MEM_READ_WRITE, float_size, NULL, &m_err);
+	cl_posInit =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
+	cl_veloInit =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
 	cl_neighbours = cl::Buffer(m_context, CL_MEM_READ_WRITE, extended_int_size, NULL, &m_err); 
 	cl_counter = cl::Buffer(m_context, CL_MEM_READ_WRITE, int_size, NULL, &m_err); 
 	cl_isAliveHelper = cl::Buffer(m_context, CL_MEM_READ_WRITE, int_size, NULL, &m_err); 
@@ -339,13 +335,10 @@ void CLsph::loadData()
 	cl_forceIntern =  cl::Buffer(m_context, CL_MEM_READ_WRITE, array_size, NULL, &m_err);
 
 
-	printf("Pushing data to the GPU \n");
-	//push CPU arrays to the GPU 
-	//first element indicates data from vector
+	printf("Push data from Host to Device (GPU) \n");
 	m_err = m_queue.enqueueWriteBuffer(cl_velocities, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_pos_gen, CL_TRUE,0, array_size, &pos[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_vel_gen, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
-	m_err = m_queue.enqueueWriteBuffer(cl_life_gen, CL_TRUE,0, float_size, &life[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_posInit, CL_TRUE,0, array_size, &pos[0], NULL, &m_event);
+	m_err = m_queue.enqueueWriteBuffer(cl_veloInit, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_neighbours, CL_TRUE,0, extended_int_size, &neighbours[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_counter, CL_TRUE,0, int_size, &counter[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_isAliveHelper, CL_TRUE,0, int_size, &aliveHelper[0], NULL, &m_event);
@@ -373,8 +366,6 @@ void CLsph::updateData()
 	float_size = m_numParticles * sizeof(float);
 
 	m_err = m_queue.enqueueWriteBuffer(cl_velocities, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
-	//m_err = m_queue.enqueueWriteBuffer(cl_pos_gen, CL_TRUE,0, array_size, &pos[0], NULL, &m_event);
-	//m_err = m_queue.enqueueWriteBuffer(cl_vel_gen, CL_TRUE,0, array_size, &vel[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_neighbours, CL_TRUE,0, extended_int_size, &neighbours[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_counter, CL_TRUE,0, int_size, &counter[0], NULL, &m_event);
 	m_err = m_queue.enqueueWriteBuffer(cl_isAliveHelper, CL_TRUE,0, int_size, &aliveHelper[0], NULL, &m_event);
@@ -394,18 +385,15 @@ void CLsph::genNeighboursKernel()
 {
 	printf("genNeighboursKernel\n");
 	
-
-	//initialize our kernel from the program
 	try
 	{
-		//name of the string must be same as defined in the cl.file
 		m_NeighboursKernel = cl::Kernel(m_program, "neighbours", &m_err);
 	}catch(cl::Error er)
 	{
 		printf("Error: %s(%d)\n", er.what(), er.err()); 
 	}
 	printf("generated neighbours kernel\n");
-	//set the arguments of the kernel
+	//argument setup
 	try
 	{
 		m_err = m_NeighboursKernel.setArg(0,cl_vbos[0]);
@@ -418,9 +406,7 @@ void CLsph::genNeighboursKernel()
 	{
 		printf("ERROR: %s\n", er.what(), oclErrorString(er.err()));
 	}
-	printf("done setting kernelarguments\n");
-	
-	//Wait for the command queue to finish these commands before proceeding
+	printf("setting kernelarguments was succesfull\n");
     m_queue.finish();
 	printf("######################################################\n");
 }
@@ -428,19 +414,15 @@ void CLsph::genNeighboursKernel()
 void CLsph::genDensityPressureKernel()
 {
 	printf("genDensityPressureKernel\n");
-	
-
-	//initialize our kernel from the program
 	try
 	{
-		//name of the string must be same as defined in the cl.file
 		m_DensityPressureKernel = cl::Kernel(m_program, "densityPressureCalc", &m_err);
 	}catch(cl::Error er)
 	{
 		printf("Error: %s(%d)\n", er.what(), er.err()); 
 	}
 	printf("generated densityPressureCalculation kernel\n");
-	//set the arguments of the kernel
+	//argument setup
 	try
 	{
 		m_err = m_DensityPressureKernel.setArg(0,cl_vbos[0]);
@@ -458,9 +440,7 @@ void CLsph::genDensityPressureKernel()
 	{
 		printf("ERROR: %s\n", er.what(), oclErrorString(er.err()));
 	}
-	printf("done setting kernelarguments\n");
-	
-	//Wait for the command queue to finish these commands before proceeding
+	printf("setting kernelarguments was succesfull\n");
     m_queue.finish();
 	printf("######################################################\n");
 }
@@ -468,19 +448,15 @@ void CLsph::genDensityPressureKernel()
 void CLsph::genSPHKernel()
 {
 	printf("genSPHKernel\n");
-	
-
-	//initialize our kernel from the program
 	try
 	{
-		//name of the string must be same as defined in the cl.file
 		m_SphKernel = cl::Kernel(m_program, "SPH", &m_err);
 	}catch(cl::Error er)
 	{
 		printf("Error: %s(%d)\n", er.what(), er.err()); 
 	}
 	printf("generated sph kernel\n");
-	//set the arguments of the kernel
+	//argument setup
 	try
 	{
 		m_err = m_SphKernel.setArg(0,cl_vbos[0]);
@@ -500,9 +476,7 @@ void CLsph::genSPHKernel()
 	{
 		printf("ERROR: %s\n", er.what(), oclErrorString(er.err()));
 	}
-	printf("done setting kernelarguments\n");
-	
-	//Wait for the command queue to finish these commands before proceeding
+	printf("setting kernelarguments was succesfull\n");
     m_queue.finish();
 	printf("######################################################\n");
 }
@@ -510,44 +484,37 @@ void CLsph::genSPHKernel()
 void CLsph::genIntegrationKernel()
 {
 	printf("genIntegrationKernel\n");
-	
-
-	//initialize our kernel from the program
 	try
 	{
-		//name of the string must be same as defined in the cl.file
 		m_IntegrationKernel = cl::Kernel(m_program, "integration", &m_err);
 	}catch(cl::Error er)
 	{
 		printf("Error: %s(%d)\n", er.what(), er.err()); 
 	}
 	printf("generated integration kernel\n");
-	//set the arguments of the kernel
+	//argument setup
 	try
 	{
 		m_err = m_IntegrationKernel.setArg(0,cl_vbos[0]);
 		m_err = m_IntegrationKernel.setArg(1,cl_velocities);
-		m_err = m_IntegrationKernel.setArg(2,cl_pos_gen);
-		m_err = m_IntegrationKernel.setArg(3,cl_vel_gen);
-		m_err = m_IntegrationKernel.setArg(4,cl_life_gen);
-		m_err = m_IntegrationKernel.setArg(5,cl_vbos[1]); //life
-		m_err = m_IntegrationKernel.setArg(6,cl_vbos[2]); //density
-		m_err = m_IntegrationKernel.setArg(7,cl_mass);
-		m_err = m_IntegrationKernel.setArg(8,cl_forceIntern);
-		m_err = m_IntegrationKernel.setArg(9,rho0);
-		m_err = m_IntegrationKernel.setArg(10,dt);
-		m_err = m_IntegrationKernel.setArg(11,cl_vbos[4]); //alive
-		m_err = m_IntegrationKernel.setArg(12,cl_isAliveHelper); 
-		m_err = m_IntegrationKernel.setArg(13,buoyancy);
-		m_err = m_IntegrationKernel.setArg(14,lifeDeduction);
+		m_err = m_IntegrationKernel.setArg(2,cl_posInit);
+		m_err = m_IntegrationKernel.setArg(3,cl_veloInit);
+		m_err = m_IntegrationKernel.setArg(4,cl_vbos[1]); //life
+		m_err = m_IntegrationKernel.setArg(5,cl_vbos[2]); //density
+		m_err = m_IntegrationKernel.setArg(6,cl_mass);
+		m_err = m_IntegrationKernel.setArg(7,cl_forceIntern);
+		m_err = m_IntegrationKernel.setArg(8,rho0);
+		m_err = m_IntegrationKernel.setArg(9,dt);
+		m_err = m_IntegrationKernel.setArg(10,cl_vbos[4]); //alive
+		m_err = m_IntegrationKernel.setArg(11,cl_isAliveHelper); 
+		m_err = m_IntegrationKernel.setArg(12,buoyancy);
+		m_err = m_IntegrationKernel.setArg(13,lifeDeduction);
 
 	}catch(cl::Error er)
 	{
 		printf("ERROR: %s\n", er.what(), oclErrorString(er.err()));
 	}
-	printf("done setting kernelarguments\n");
-	
-	//Wait for the command queue to finish these commands before proceeding
+	printf("setting kernelarguments was succesfull\n");
     m_queue.finish();
 	printf("######################################################\n");
 }
@@ -559,8 +526,7 @@ void CLsph::runKernel(int kernelnumber, int mousefun)
 	//make sure openGL is done using VBO's
 	glFinish();
 
-	//map OpenGL buffer object for writing from OpenCL
-	//this passes in the vector of VBO buffer objects
+	//let opencl acquire vbos for proceedings
 	m_err = m_queue.enqueueAcquireGLObjects(&cl_vbos, NULL, &m_event);
 	m_queue.finish();
 
@@ -572,7 +538,7 @@ void CLsph::runKernel(int kernelnumber, int mousefun)
 	{
 		m_err = m_queue.enqueueNDRangeKernel(m_NeighboursKernel, cl::NullRange, cl::NDRange(m_numParticles),cl::NullRange, NULL, &m_event); // zweites Nullrange für local
 	}
-	//1 == Density
+	//1 == DensityPressure
 	if(kernelnumber == 1)
 	{
 		m_err = m_queue.enqueueNDRangeKernel(m_DensityPressureKernel, cl::NullRange, cl::NDRange(m_numParticles),cl::NullRange, NULL, &m_event);
@@ -585,7 +551,7 @@ void CLsph::runKernel(int kernelnumber, int mousefun)
 	//3 == Integration
 	if(kernelnumber == 3)
 	{
-		m_IntegrationKernel.setArg(15, mousefun);
+		m_IntegrationKernel.setArg(14, mousefun);
 		m_err = m_queue.enqueueNDRangeKernel(m_IntegrationKernel, cl::NullRange, cl::NDRange(m_numParticles),cl::NullRange, NULL, &m_event);
 	}
 	
@@ -648,7 +614,6 @@ void CLsph::render()
 	//render Particles from VBOS
 	glEnable(GL_POINT_SPRITE);
 	glEnable(GL_PROGRAM_POINT_SIZE);
-	
 	glDrawArrays(GL_POINTS, 0, m_numParticles);
 }
 
